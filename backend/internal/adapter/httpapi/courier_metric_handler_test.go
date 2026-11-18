@@ -40,7 +40,7 @@ func newServer(lister *fakeLister) http.Handler {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	return httpapi.NewRouter(httpapi.Handlers{
 		CourierMetrics:     httpapi.NewCourierMetricHandler(lister, logger),
-		CourierPerformance: httpapi.NewCourierPerformanceHandler(&fakePerformanceLister{}, logger),
+		CourierPerformance: httpapi.NewCourierPerformanceHandler(&fakePerformanceLister{}, &fakeRateTargets{}, logger),
 	}, logger)
 }
 

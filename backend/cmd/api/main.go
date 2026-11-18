@@ -55,7 +55,7 @@ func run() error {
 	targetService := service.NewTargetService(postgres.NewTargetRepository(pool))
 	router := httpapi.NewRouter(httpapi.Handlers{
 		CourierMetrics:     httpapi.NewCourierMetricHandler(metricService, logger),
-		CourierPerformance: httpapi.NewCourierPerformanceHandler(metricService, logger),
+		CourierPerformance: httpapi.NewCourierPerformanceHandler(metricService, targetService, logger),
 		KPITargets:         httpapi.NewKPITargetHandler(targetService, logger),
 	}, logger)
 

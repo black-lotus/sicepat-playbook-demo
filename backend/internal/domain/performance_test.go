@@ -107,3 +107,26 @@ func TestCourierPerformance_Rates(t *testing.T) {
 		})
 	}
 }
+
+func TestCourierPerformance_SuccessRateStatus(t *testing.T) {
+	target := &domain.KPITarget{SuccessRate: 0.85}
+	tests := []struct {
+		name   string
+		perf   domain.CourierPerformance
+		target *domain.KPITarget
+		want   *domain.TargetStatus
+	}{
+		{name: "tanpa target nil", perf: domain.CourierPerformance{TotalPackages: 10, Delivered: 10}, target: nil, want: nil},
+		{name: "sama dengan target met", perf: domain.CourierPerformance{TotalPackages: 100, Delivered: 85}, target: target, want: ptrStatus(domain.TargetMet)},
+		{name: "di atas target met", perf: domain.CourierPerformance{TotalPackages: 10, Delivered: 10}, target: target, want: ptrStatus(domain.TargetMet)},
+		{name: "0,84996 di bawah 0,85 below", perf: domain.CourierPerformance{TotalPackages: 100000, Delivered: 84996}, target: target, want: ptrStatus(domain.TargetBelow)},
+		{name: "tanpa paket di bawah target", perf: domain.CourierPerformance{}, target: target, want: ptrStatus(domain.TargetBelow)},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, tt.perf.SuccessRateStatus(tt.target))
+		})
+	}
+}
+
+func ptrStatus(s domain.TargetStatus) *domain.TargetStatus { return &s }
