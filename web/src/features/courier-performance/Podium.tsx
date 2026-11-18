@@ -1,6 +1,7 @@
 import type { CourierPerformance } from '../../api/types';
 import { formatNumber } from '../../lib/format-number';
 import { formatPercent } from '../../lib/format-percent';
+import { DailyStrip } from './DailyStrip';
 
 interface PodiumProps {
   items: CourierPerformance[];
@@ -24,6 +25,7 @@ export function Podium({ items, onSelect }: PodiumProps) {
             <span className="podium-meta">
               Tepat SLA {formatPercent(item.slaRate)} · {formatNumber(item.totalPackages)} paket
             </span>
+            <DailyStrip daily={item.daily} size="md" decorative />
           </button>
         </li>
       ))}

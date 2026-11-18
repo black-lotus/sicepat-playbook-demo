@@ -111,6 +111,21 @@ describe('CourierPerformancePage', () => {
     expect(params?.get('page_size')).toBe('50');
   });
 
+  it('kartu podium punya nama aksesibel tanpa strip harian dan tanpa div di dalam tombol', async () => {
+    server.use(http.get(endpoint, () => HttpResponse.json({ data: courierPerformanceDTOs, meta })));
+
+    renderPage();
+
+    const podium = await screen.findByRole('list', { name: 'Podium' });
+    const budiCard = within(podium).getByRole('button', { name: /Budi Santoso/ });
+    expect(budiCard).toHaveAccessibleName(/Budi Santoso/);
+    expect(budiCard).not.toHaveAccessibleName(/Tren harian/);
+    expect(budiCard.querySelector('div')).toBeNull();
+    for (const card of within(podium).getAllByRole('button')) {
+      expect(card.querySelector('div')).toBeNull();
+    }
+  });
+
   it('pindah ke halaman 2 tanpa podium dengan rank global, lalu mengubah cabang kembali ke halaman 1', async () => {
     const requests: URLSearchParams[] = [];
     server.use(
