@@ -35,7 +35,7 @@
 .daily-cell { min-width: 112px; }
 
 .detail-backdrop { position: fixed; inset: 0; z-index: 20; display: flex; justify-content: flex-end; background: var(--color-scrim); }
-.detail-panel { width: min(480px, 100%); height: 100%; overflow-y: auto; padding: var(--space-5); background: var(--color-surface); color: var(--color-ink); border-left: 1px solid var(--color-rule); display: flex; flex-direction: column; gap: var(--space-4); }
+.detail-panel { width: min(480px, 100%); height: 100%; overflow-y: auto; padding: var(--space-5); background: var(--color-surface-solid); color: var(--color-ink); border-left: 1px solid var(--color-rule); display: flex; flex-direction: column; gap: var(--space-4); }
 .detail-header { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3); }
 .detail-header h2 { margin: 0; font-family: var(--font-figure); font-size: var(--text-xl); }
 .detail-pos, .detail-branch { margin: 0; font-size: var(--text-sm); color: var(--color-ink-muted); }
@@ -89,7 +89,7 @@
 .filters-sheet { flex-direction: column; align-items: stretch; margin-bottom: 0; }
 .filters-sheet .date-range { flex-wrap: wrap; }
 .filters-sheet input { min-height: 40px; }
-.filter-done { min-height: 44px; background: var(--color-lane); border-color: var(--color-lane); color: var(--color-surface); font-weight: 600; }
+.filter-done { min-height: 44px; background: var(--color-lane); border-color: var(--color-lane); color: #fff; font-weight: 600; }
 
 .results-list { list-style: none; margin: 0; padding: 0; background: var(--color-surface); border: 1px solid var(--color-rule); border-radius: 8px; }
 .results-item { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); padding: var(--space-3); border-bottom: 1px solid var(--color-rule); }
