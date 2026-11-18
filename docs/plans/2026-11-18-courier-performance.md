@@ -16,6 +16,7 @@
 
 ## Global Constraints
 - Zona waktu periode: Asia/Jakarta. Periode `[from 00:00 WIB, to+1 hari 00:00 WIB)`.
+- Batas SLA dari `AssignedAt` (WIB): sebelum 16:00 berarti hari yang sama 23:59:59; pukul 16:00 atau lebih berarti besok 16:00:00. Tepat SLA bila `DeliveredAt <= batas`.
 - Periode maksimal 31 hari inklusif.
 - Rate dibulatkan 4 desimal di BE. FE tidak menghitung ulang rate, hanya memformat.
 - `items` kosong dikirim sebagai `[]`, bukan `null`.
@@ -25,7 +26,7 @@
 - BE dan FE hanya menyentuh foldernya sendiri (`backend/`, `web/`). `contracts/` hanya diubah lewat Task 0 atau PR yang direview kedua sisi.
 
 ## Review Focus
-1. Batas hari di WIB: paket 23:30 WIB di hari `to` harus masuk. Kalau BE memakai UTC, paket itu hilang. Dikunci di Task B2 (`TestReport_PeriodBoundaryWIB`).
+1. Batas waktu dihitung di WIB, bukan UTC. Kalau batas hari memakai UTC (= 07:00 WIB), paket 00:00 sampai 06:59 WIB di tanggal `from` hilang dan paket dini hari setelah `to` ikut masuk; cut-off SLA 16:00 juga bergeser. Paket 23:30 WIB di hari `to` menangkap kesalahan lain: `to` diperlakukan eksklusif. Dikunci di Task B1 (`TestSLADeadline`) dan Task B2 (`TestReport_PeriodBoundaryWIB`).
 2. Pembagian dengan nol: kurir yang paketnya semua `ON_PROCESS` punya `delivered` 0. Rate harus 0, bukan NaN di JSON. Dikunci di Task B1 (`TestSummarize_ZeroDivision`).
 3. `items: null`: slice Go nil ter-encode sebagai `null` dan membuat FE crash di `.map`. Dikunci di Task B3 (`TestHandler_EmptyItemsIsArray`) dan Task F3 (state kosong).
 4. Error dari API tidak boleh membuat halaman putih: FE menampilkan `error.message`. Dikunci di Task F2 (`ApiError`) dan Task F3 (test state error).
@@ -86,7 +87,9 @@ git commit -m "docs(contracts): kontrak API performa kurir"
 **Interfaces:**
 - Produces:
   - `type DeliveryStatus string` dengan konstanta `StatusDelivered = "DELIVERED"`, `StatusFailed = "FAILED"`, `StatusOnProcess = "ON_PROCESS"`
-  - `type Delivery struct { AWB, CourierID, CourierName, BranchID string; Status DeliveryStatus; AssignedAt time.Time; DeliveredAt *time.Time; SLADeadline time.Time }`
+  - `var WIB = time.FixedZone("WIB", 7*3600)` (Indonesia tanpa DST, jadi zona tetap sudah benar dan tidak bergantung tzdata)
+  - `type Delivery struct { AWB, CourierID, CourierName, BranchID string; Status DeliveryStatus; AssignedAt time.Time; DeliveredAt *time.Time }`
+  - `func SLADeadline(assignedAt time.Time) time.Time`: konversi ke `WIB`, lalu sebelum 16:00 kembalikan hari itu 23:59:59, pukul 16:00 atau lebih kembalikan besok 16:00:00, keduanya di `WIB`.
   - `type CourierPerformance struct { CourierID, CourierName string; Assigned, Delivered, Failed, OnTime int; SuccessRate, OnTimeRate float64 }`
   - `func SummarizeCourierPerformance(deliveries []Delivery) []CourierPerformance`: kelompokkan per `CourierID`, hitung sesuai spec, urutkan `SuccessRate` menurun lalu `CourierID` menaik, selalu kembalikan slice non-nil.
 
@@ -94,7 +97,15 @@ git commit -m "docs(contracts): kontrak API performa kurir"
   - `"campuran"`: C001 dengan 3 DELIVERED (2 sebelum SLA, 1 sesudah), 1 FAILED, 1 ON_PROCESS. Harapan: `Assigned 5, Delivered 3, Failed 1, OnTime 2, SuccessRate 0.6, OnTimeRate 0.6667`.
   - `"urutan"`: C002 rate 1.0, C001 rate 0.5, C003 rate 0.5. Harapan urutan ID: `C002, C001, C003`.
   - `"kosong"`: input nil. Harapan `NotNil` dan `Len 0`.
-  - `"tepat di deadline"`: `DeliveredAt == SLADeadline` dihitung `OnTime`.
+  - `"tepat di deadline"`: `DeliveredAt == SLADeadline(AssignedAt)` dihitung `OnTime`.
+- [ ] **Step 1b: Tulis test table-driven `TestSLADeadline`** (waktu ditulis dengan `time.Date(..., WIB)` kecuali disebut UTC):
+  - ditugaskan 7 Nov 09:00 menghasilkan 7 Nov 23:59:59
+  - ditugaskan 7 Nov 15:59:59 menghasilkan 7 Nov 23:59:59
+  - ditugaskan 7 Nov 16:00:00 menghasilkan 8 Nov 16:00:00
+  - ditugaskan 7 Nov 21:00 menghasilkan 8 Nov 16:00:00
+  - ditugaskan 30 Nov 17:00 menghasilkan 1 Des 16:00:00 (ganti bulan)
+  - ditugaskan 7 Nov 09:00 UTC (= 16:00 WIB) menghasilkan 8 Nov 16:00:00 WIB
+  - Bandingkan dengan `Equal`, bukan `==`.
 - [ ] **Step 2: Tulis `TestSummarize_ZeroDivision`**: C009 dengan 2 paket `ON_PROCESS`. Harapan `SuccessRate 0`, `OnTimeRate 0`, `Delivered 0`, dan `math.IsNaN` false untuk keduanya.
 - [ ] **Step 3: Jalankan, pastikan gagal**
 
@@ -142,14 +153,14 @@ git commit -m "feat(backend): hitung performa kurir di domain"
   - `From: "2026-11-01", To: "2026-12-02"` (32 hari) menghasilkan `INVALID_DATE_RANGE`
   - `From: "2026-11-01", To: "2026-12-01"` (31 hari) lolos tanpa error
   - `From: "2026-11-07", To: "2026-11-07"` (1 hari) lolos tanpa error
-- [ ] **Step 3: Tulis `TestReport_PeriodBoundaryWIB`**: query `2026-11-01` sampai `2026-11-07`. Harapan argumen ke repo: `start == 2026-11-01T00:00:00+07:00`, `end == 2026-11-08T00:00:00+07:00`. Seed fake dengan paket `2026-11-07T23:30:00+07:00` (harus terhitung) dan `2026-11-08T00:00:00+07:00` (tidak terhitung); harapan `Assigned` total 1.
+- [ ] **Step 3: Tulis `TestReport_PeriodBoundaryWIB`**: query `2026-11-01` sampai `2026-11-07`. Harapan argumen ke repo: `start` `Equal` `2026-11-01T00:00:00+07:00`, `end` `Equal` `2026-11-08T00:00:00+07:00`. Seed fake dengan empat paket satu kurir: `2026-11-01T05:00:00+07:00` dan `2026-11-07T23:30:00+07:00` (terhitung), `2026-10-31T23:59:00+07:00` dan `2026-11-08T00:00:00+07:00` (tidak terhitung); harapan `Assigned` total 2.
 - [ ] **Step 4: Tulis `TestReport_RepoError`**: fake mengembalikan error; harapan error dibungkus dan `errors.Is` ke error asli true, bukan `ValidationError`.
 - [ ] **Step 5: Jalankan, pastikan gagal**
 
 Run: `cd backend && go test ./internal/service/...`
 Expected: FAIL, simbol belum ada.
 
-- [ ] **Step 6: Implementasi.** Zona waktu lewat `time.LoadLocation("Asia/Jakarta")` sekali di konstruktor; bila gagal, pakai `time.FixedZone("WIB", 7*3600)`. Parse tanggal dengan `time.ParseInLocation("2006-01-02", ...)`. Bungkus error repo: `fmt.Errorf("ambil delivery cabang: %w", err)`.
+- [ ] **Step 6: Implementasi.** Zona waktu memakai `domain.WIB`. Parse tanggal dengan `time.ParseInLocation("2006-01-02", ...)`. Bungkus error repo: `fmt.Errorf("ambil delivery cabang: %w", err)`.
 - [ ] **Step 7: Jalankan, pastikan lolos**
 
 Run: `cd backend && go test -race -cover ./internal/...`
