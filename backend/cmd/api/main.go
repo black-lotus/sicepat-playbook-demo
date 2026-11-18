@@ -52,7 +52,11 @@ func run() error {
 		cfg.CacheTTL,
 		logger,
 	)
-	router := httpapi.NewRouter(httpapi.NewCourierMetricHandler(metricService, logger), logger)
+	router := httpapi.NewRouter(
+		httpapi.NewCourierMetricHandler(metricService, logger),
+		httpapi.NewCourierPerformanceHandler(metricService, logger),
+		logger,
+	)
 
 	server := &http.Server{
 		Addr:              cfg.HTTPAddr,

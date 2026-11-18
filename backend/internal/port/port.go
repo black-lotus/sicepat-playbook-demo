@@ -11,6 +11,7 @@ import (
 // MetricRepository membaca dan menghitung agregat KPI kurir.
 type MetricRepository interface {
 	ListCourierMetrics(ctx context.Context, filter domain.MetricFilter) (domain.CourierMetricPage, error)
+	ListCourierPerformance(ctx context.Context, filter domain.MetricFilter) (domain.CourierPerformancePage, error)
 	AggregateDaily(ctx context.Context, date time.Time) error
 }
 

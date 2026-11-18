@@ -1,7 +1,8 @@
 DATABASE_URL ?= postgres://sigesit:sigesit@localhost:5432/sigesit?sslmode=disable
 MIGRATE_IMAGE := migrate/migrate:v4.18.3
+SEED_IMAGE := postgres:16-alpine
 
-.PHONY: run-api run-worker run-consumer test test-race test-integration cover lint mocks migrate-up migrate-down
+.PHONY: run-api run-worker run-consumer test test-race test-integration cover lint mocks migrate-up migrate-down seed
 
 run-api:
 	DATABASE_URL=$(DATABASE_URL) go run ./cmd/api
@@ -18,6 +19,8 @@ test:
 test-race:
 	go test -race ./...
 
+# PERINGATAN: test ini men-TRUNCATE tabel delivery_events, courier_daily_metrics, dan couriers.
+# Jangan arahkan DATABASE_URL ke database yang berisi data yang ingin disimpan.
 test-integration:
 	TEST_DATABASE_URL=$(DATABASE_URL) go test -tags=integration ./...
 
@@ -37,3 +40,7 @@ migrate-up:
 
 migrate-down:
 	docker run --rm --network host -v $(CURDIR)/migrations:/migrations $(MIGRATE_IMAGE) -path=/migrations -database "$(DATABASE_URL)" down 1
+
+# Mengisi data contoh (idempoten). Butuh Docker; DATABASE_URL harus bisa dijangkau dari network host.
+seed:
+	docker run --rm --network host -v $(CURDIR)/seeds:/seeds:ro $(SEED_IMAGE) psql "$(DATABASE_URL)" -v ON_ERROR_STOP=1 -f /seeds/demo.sql

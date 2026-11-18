@@ -14,6 +14,7 @@ import (
 	"github.com/black-lotus/sicepat-playbook-demo/backend/internal/adapter/postgres"
 	"github.com/black-lotus/sicepat-playbook-demo/backend/internal/adapter/redis"
 	"github.com/black-lotus/sicepat-playbook-demo/backend/internal/config"
+	"github.com/black-lotus/sicepat-playbook-demo/backend/internal/domain"
 	"github.com/black-lotus/sicepat-playbook-demo/backend/internal/service"
 )
 
@@ -50,7 +51,7 @@ func run() error {
 	defer ticker.Stop()
 
 	for {
-		aggregate(ctx, svc, logger)
+		aggregate(ctx, svc, time.Now(), logger)
 		select {
 		case <-ctx.Done():
 			logger.Info("menghentikan worker")
@@ -60,9 +61,9 @@ func run() error {
 	}
 }
 
-// aggregate menghitung ulang KPI hari ini dan kemarin (UTC), karena event bisa datang terlambat.
-func aggregate(ctx context.Context, svc *service.MetricService, logger *slog.Logger) {
-	now := time.Now().UTC()
+// aggregate menghitung ulang KPI hari ini dan kemarin (tanggal WIB), karena event bisa datang terlambat.
+func aggregate(ctx context.Context, svc *service.MetricService, now time.Time, logger *slog.Logger) {
+	now = now.In(domain.WIB)
 	for _, day := range []time.Time{now.AddDate(0, 0, -1), now} {
 		if err := svc.AggregateDaily(ctx, day); err != nil {
 			logger.ErrorContext(ctx, "agregasi gagal", slog.Any("error", err))

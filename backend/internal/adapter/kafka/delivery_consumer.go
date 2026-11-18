@@ -44,6 +44,7 @@ type deliveryMessage struct {
 	Status       string     `json:"status"`
 	FailedReason string     `json:"failed_reason"`
 	OccurredAt   time.Time  `json:"occurred_at"`
+	AssignedAt   *time.Time `json:"assigned_at"`
 	DueAt        *time.Time `json:"due_at"`
 }
 
@@ -56,10 +57,13 @@ func (m deliveryMessage) toDomain() domain.DeliveryEvent {
 		FailedReason: m.FailedReason,
 		OccurredAt:   m.OccurredAt.UTC(),
 	}
+	if m.AssignedAt != nil {
+		e.AssignedAt = m.AssignedAt.UTC()
+	}
 	if m.DueAt != nil {
 		e.DueAt = m.DueAt.UTC()
 	}
-	return e
+	return e.WithDefaultDueAt()
 }
 
 // Run memproses pesan sampai ctx dibatalkan.

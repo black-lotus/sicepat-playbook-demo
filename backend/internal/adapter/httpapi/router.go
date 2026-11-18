@@ -7,12 +7,13 @@ import (
 )
 
 // NewRouter menyusun semua route API beserta middleware.
-func NewRouter(courierMetrics *CourierMetricHandler, logger *slog.Logger) http.Handler {
+func NewRouter(courierMetrics *CourierMetricHandler, courierPerformance *CourierPerformanceHandler, logger *slog.Logger) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	})
 	mux.HandleFunc("GET /api/v1/courier-metrics", courierMetrics.List)
+	mux.HandleFunc("GET /api/v1/courier-performance", courierPerformance.List)
 
 	return recoverer(logger, requestLogger(logger, mux))
 }
