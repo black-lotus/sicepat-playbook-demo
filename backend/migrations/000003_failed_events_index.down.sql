@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS idx_delivery_events_failed_branch_occurred;
