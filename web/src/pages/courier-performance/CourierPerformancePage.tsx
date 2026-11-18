@@ -8,6 +8,8 @@ import { QueryState } from '../../components/QueryState';
 import { formatDateRange } from '../../lib/date';
 import { useMediaQuery } from '../../lib/use-media-query';
 import '../../features/courier-performance/courier-performance.css';
+import '../../features/courier-performance/podium.css';
+import '../../features/courier-performance/results.css';
 import '../../features/courier-performance/detail-panel.css';
 import { CourierDetailPanel } from '../../features/courier-performance/CourierDetailPanel';
 import { FilterSheet } from '../../features/courier-performance/FilterSheet';
@@ -99,17 +101,20 @@ export function CourierPerformancePage({ today }: CourierPerformancePageProps) {
         {query.data && (
           <div className={query.isPlaceholderData ? 'results results-stale' : 'results'} aria-busy={query.isPlaceholderData ? true : undefined}>
             {query.data.meta.page === 1 && <Podium items={query.data.items} onSelect={setSelectedCourierID} />}
-            {isNarrow ? (
-              <ResultsList items={query.data.items} onSelect={setSelectedCourierID} />
-            ) : (
-              <ResultsTable items={query.data.items} onSelect={setSelectedCourierID} />
-            )}
-            <Pagination
-              page={query.data.meta.page}
-              pageSize={query.data.meta.pageSize}
-              total={query.data.meta.total}
-              onPageChange={setPage}
-            />
+            <div className="card results-card">
+              <h2 className="card-title">Hasil lengkap</h2>
+              {isNarrow ? (
+                <ResultsList items={query.data.items} onSelect={setSelectedCourierID} />
+              ) : (
+                <ResultsTable items={query.data.items} onSelect={setSelectedCourierID} />
+              )}
+              <Pagination
+                page={query.data.meta.page}
+                pageSize={query.data.meta.pageSize}
+                total={query.data.meta.total}
+                onPageChange={setPage}
+              />
+            </div>
           </div>
         )}
       </QueryState>

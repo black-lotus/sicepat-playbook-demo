@@ -1,0 +1,59 @@
+/* Podium: peringkat 1 sebagai kartu hero bergradasi, peringkat 2 dan 3 sebagai kartu glass. */
+.podium { list-style: none; display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); grid-template-rows: auto auto; gap: var(--space-4); padding: 0; margin: 0 0 var(--space-5); }
+.podium[data-count="1"] { grid-template-columns: minmax(0, 1fr); }
+.podium-item { display: flex; min-width: 0; }
+.podium-item-hero { grid-row: 1 / span 2; }
+.podium-gold { --medal: var(--color-gold); }
+.podium-silver { --medal: var(--color-silver); }
+.podium-bronze { --medal: var(--color-bronze); }
+
+.podium-card { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; padding: var(--space-4) var(--space-5); text-align: left; color: var(--color-ink); background: var(--color-surface); border: 1px solid var(--color-rule); border-radius: var(--radius-card); box-shadow: var(--shadow-card); backdrop-filter: blur(14px); font-family: var(--font-ui); overflow: hidden; transition: transform 160ms ease-out, border-color 160ms ease-out; }
+.podium-card:hover { transform: translateY(-2px); border-color: rgb(255 255 255 / 0.18); }
+.podium-who { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+.podium-who-text { display: flex; flex-direction: column; min-width: 0; }
+.podium-pos { font-size: var(--text-sm); font-weight: 700; color: var(--medal); }
+.podium-name { font-size: var(--text-base); font-weight: 700; overflow-wrap: anywhere; }
+.podium-figure { margin-top: var(--space-3); font-size: 2.25rem; font-weight: 800; line-height: 1.05; letter-spacing: -0.02em; }
+.podium-label, .podium-meta { font-size: var(--text-sm); color: var(--color-ink-muted); }
+.podium-card .daily-strip-md { margin-top: auto; gap: 5px; }
+.podium-card .daily-day { border-radius: 4px; }
+
+.podium-hero { min-height: 280px; padding: var(--space-5); color: #fff; border-color: rgb(255 255 255 / 0.2); background: radial-gradient(70% 80% at 100% 0%, rgb(255 255 255 / 0.24), transparent 62%), radial-gradient(60% 70% at 95% 100%, rgb(139 92 246 / 0.55), transparent 70%), var(--gradient-hero); box-shadow: 0 18px 44px rgb(74 60 220 / 0.4), inset 0 1px 0 rgb(255 255 255 / 0.24); }
+.podium-hero:hover { border-color: rgb(255 255 255 / 0.32); }
+/* Gelombang dekoratif: dua elips bergaris tipis yang terpotong tepi kartu. */
+.podium-hero::before, .podium-hero::after { content: ''; position: absolute; pointer-events: none; border-radius: 50%; }
+.podium-hero::before { left: 28%; right: -28%; bottom: -62%; height: 100%; border-top: 2px solid rgb(255 255 255 / 0.42); background: radial-gradient(ellipse at 50% 0%, rgb(190 200 255 / 0.3), transparent 68%); transform: rotate(-9deg); }
+.podium-hero::after { left: 8%; right: -45%; bottom: -78%; height: 100%; border-top: 2px solid rgb(255 255 255 / 0.22); background: radial-gradient(ellipse at 50% 0%, rgb(120 140 255 / 0.32), transparent 68%); transform: rotate(-4deg); }
+.podium-hero > * { position: relative; z-index: 1; }
+.podium-eyebrow { font-size: var(--text-sm); font-weight: 600; color: rgb(255 255 255 / 0.9); }
+.podium-hero .podium-who { margin-top: var(--space-3); }
+.podium-hero .podium-name { font-size: var(--text-lg); }
+.podium-hero .podium-figure { margin-top: var(--space-4); font-size: clamp(3.5rem, 7vw, 5.5rem); }
+.podium-hero .podium-label, .podium-hero .podium-meta { color: rgb(255 255 255 / 0.88); }
+.podium-chip { display: inline-flex; align-items: center; gap: var(--space-1); margin-top: var(--space-3); padding: 4px 10px; border-radius: var(--radius-pill); background: rgb(6 10 34 / 0.5); color: var(--color-positive); font-size: var(--text-sm); font-weight: 700; }
+.podium-hero .podium-meta { margin-bottom: var(--space-3); }
+.podium-hero .daily-strip-md { height: 56px; margin-top: auto; gap: 6px; }
+.podium-hero .daily-day { background: rgb(255 255 255 / 0.16); }
+.podium-hero .daily-on-time { background: #fff; }
+.podium-hero .daily-late { background: repeating-linear-gradient(135deg, #fff 0 2px, transparent 2px 4px); }
+
+.avatar { display: inline-grid; place-items: center; flex: none; border-radius: 50%; font-weight: 700; letter-spacing: 0.02em; color: #fff; background: linear-gradient(135deg, hsl(var(--hue) 62% 27%), hsl(calc(var(--hue) + 40) 62% 19%)); border: 1px solid rgb(255 255 255 / 0.18); }
+.avatar-sm { width: 32px; height: 32px; font-size: 0.6875rem; }
+.avatar-md { width: 44px; height: 44px; font-size: var(--text-sm); }
+.avatar-lg { width: 56px; height: 56px; font-size: var(--text-base); }
+.avatar-gold { background: linear-gradient(135deg, #ffe48f, var(--color-gold)); }
+.avatar-silver { background: linear-gradient(135deg, #f2f5fb, var(--color-silver)); }
+.avatar-bronze { background: linear-gradient(135deg, #f7c299, var(--color-bronze)); }
+.avatar-medal { color: var(--color-medal-ink); border-color: transparent; }
+
+@media (max-width: 1024px) {
+  .podium-figure { font-size: 2rem; }
+}
+
+@media (max-width: 640px) {
+  .podium { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: var(--space-2); scroll-padding-inline: var(--space-4); }
+  .podium-item { flex: 0 0 82%; scroll-snap-align: start; }
+  .podium-item-hero { flex-basis: 88%; }
+  .podium-hero { min-height: 250px; padding: var(--space-4); }
+  .podium-hero .podium-figure { font-size: 3.5rem; }
+}

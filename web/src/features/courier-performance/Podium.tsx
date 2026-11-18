@@ -1,8 +1,10 @@
 import { useRef } from 'react';
 
+import { CheckIcon } from '../../components/icons';
 import type { CourierPerformance } from '../../api/types';
 import { formatNumber } from '../../lib/format-number';
 import { formatPercent } from '../../lib/format-percent';
+import { Avatar } from './Avatar';
 import { DailyStrip } from './DailyStrip';
 import { useFinishLine } from './use-finish-line';
 
@@ -11,7 +13,7 @@ interface PodiumProps {
   onSelect: (courierID: string) => void;
 }
 
-const medal: Record<number, string> = { 1: 'gold', 2: 'silver', 3: 'bronze' };
+const medal: Record<number, 'gold' | 'silver' | 'bronze'> = { 1: 'gold', 2: 'silver', 3: 'bronze' };
 
 export function Podium({ items, onSelect }: PodiumProps) {
   const top = items.filter((item) => item.rank >= 1 && item.rank <= 3);
@@ -19,21 +21,54 @@ export function Podium({ items, onSelect }: PodiumProps) {
   useFinishLine(listRef, top.map((item) => item.courierID));
 
   return (
-    <ol ref={listRef} className="podium" aria-label="Podium">
-      {top.map((item) => (
-        <li key={item.courierID} className="podium-item" data-finish-key={item.courierID}>
-          <button type="button" className={`podium-card podium-${medal[item.rank]}`} onClick={() => onSelect(item.courierID)}>
-            <span className="podium-pos">{item.rank}</span>
-            <span className="podium-name">{item.courierName || item.courierID}</span>
-            <span className="podium-figure">{formatPercent(item.successRate)}</span>
-            <span className="podium-label">Keberhasilan</span>
-            <span className="podium-meta">
-              Tepat SLA {formatPercent(item.slaRate)} · {formatNumber(item.totalPackages)} paket
-            </span>
-            <DailyStrip daily={item.daily} size="md" decorative />
-          </button>
-        </li>
-      ))}
+    <ol ref={listRef} className="podium" aria-label="Podium" data-count={top.length}>
+      {top.map((item) => {
+        const name = item.courierName || item.courierID;
+        const tone = medal[item.rank];
+        const isHero = item.rank === 1;
+        return (
+          <li key={item.courierID} className={`podium-item${isHero ? ' podium-item-hero' : ''}`} data-finish-key={item.courierID}>
+            <button
+              type="button"
+              className={`podium-card podium-${tone}${isHero ? ' podium-hero' : ''}`}
+              onClick={() => onSelect(item.courierID)}
+            >
+              {isHero ? (
+                <>
+                  <span className="podium-eyebrow">Kurir terbaik periode ini</span>
+                  <span className="podium-who">
+                    <Avatar courierID={item.courierID} name={name} medal={tone} size="lg" />
+                    <span className="podium-name">{name}</span>
+                  </span>
+                  <span className="podium-figure">{formatPercent(item.successRate)}</span>
+                  <span className="podium-label">Keberhasilan</span>
+                  <span className="podium-chip">
+                    <CheckIcon width={14} height={14} />
+                    Tepat SLA {formatPercent(item.slaRate)}
+                  </span>
+                  <span className="podium-meta">{formatNumber(item.totalPackages)} paket</span>
+                </>
+              ) : (
+                <>
+                  <span className="podium-who">
+                    <Avatar courierID={item.courierID} name={name} medal={tone} size="md" />
+                    <span className="podium-who-text">
+                      <span className="podium-pos">Pos {item.rank}</span>
+                      <span className="podium-name">{name}</span>
+                    </span>
+                  </span>
+                  <span className="podium-figure">{formatPercent(item.successRate)}</span>
+                  <span className="podium-label">Keberhasilan</span>
+                  <span className="podium-meta">
+                    Tepat SLA {formatPercent(item.slaRate)} · {formatNumber(item.totalPackages)} paket
+                  </span>
+                </>
+              )}
+              <DailyStrip daily={item.daily} size="md" decorative />
+            </button>
+          </li>
+        );
+      })}
     </ol>
   );
 }
