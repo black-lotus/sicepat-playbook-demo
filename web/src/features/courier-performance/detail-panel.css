@@ -1,27 +1,52 @@
 /* Panel detail kurir (dialog). */
 .detail-backdrop { position: fixed; inset: 0; z-index: 20; display: flex; justify-content: flex-end; background: var(--color-scrim); }
-.detail-panel { width: min(480px, 100%); height: 100%; overflow-y: auto; padding: var(--space-5); background: var(--color-surface-solid); color: var(--color-ink); border-left: 1px solid var(--color-rule); display: flex; flex-direction: column; gap: var(--space-4); }
+.detail-panel { width: min(480px, 100%); height: 100%; overflow-y: auto; padding: var(--space-5); background: var(--color-surface-solid); color: var(--color-ink); border-left: 1px solid var(--color-rule); box-shadow: var(--shadow-pop); display: flex; flex-direction: column; gap: var(--space-4); }
 .detail-header { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3); }
-.detail-header h2 { margin: 0; font-family: var(--font-figure); font-size: var(--text-xl); }
+.detail-header h2 { margin: 0; font-size: 1.375rem; font-weight: 800; letter-spacing: -0.01em; }
 .detail-pos, .detail-branch { margin: 0; font-size: var(--text-sm); color: var(--color-ink-muted); }
 .detail-totals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); margin: 0; }
+.detail-totals > div { padding: var(--space-3); background: var(--color-surface); border: 1px solid var(--color-rule); border-radius: 16px; }
 .detail-totals dt { font-size: var(--text-xs); color: var(--color-ink-muted); }
-.detail-totals dd { margin: 0; font-family: var(--font-figure); font-size: var(--text-lg); font-weight: 700; font-variant-numeric: tabular-nums; }
-.lane-chart { width: 100%; height: auto; }
-.lane-axis { stroke: var(--color-ink-muted); stroke-width: 1; }
-.lane-grid { stroke: var(--color-rule); stroke-width: 1; }
-.lane-tick { fill: var(--color-ink-muted); font-size: 11px; font-family: var(--font-ui); }
-.lane-line { stroke-width: 2; }
-.lane-line-delivered { stroke: var(--color-lane); }
-.lane-line-on-time { stroke: var(--color-lane); stroke-dasharray: 5 4; }
-.lane-dot { fill: var(--color-lane); }
-.detail-legend { display: flex; gap: var(--space-4); margin: 0; font-size: var(--text-sm); color: var(--color-ink-muted); }
-.detail-legend span::before { content: ''; display: inline-block; width: 20px; margin-right: var(--space-2); vertical-align: middle; border-top: 2px solid var(--color-lane); }
-.detail-legend .legend-on-time::before { border-top-style: dashed; }
+.detail-totals dd { margin: 0; font-size: var(--text-lg); font-weight: 800; white-space: nowrap; }
+.detail-who { display: flex; align-items: center; gap: var(--space-3); }
+.detail-card { padding: var(--space-4); background: var(--color-surface); border: 1px solid var(--color-rule); border-radius: 20px; }
+.detail-card h3 { margin: 0 0 var(--space-3); font-size: var(--text-base); font-weight: 700; }
+.detail-card h3 + .detail-note { margin-top: calc(var(--space-2) * -1); }
+.detail-note { margin: 0 0 var(--space-3); font-size: var(--text-xs); color: var(--color-ink-muted); }
+.detail-daily summary { cursor: pointer; font-size: var(--text-sm); font-weight: 600; color: var(--color-ink-muted); padding: var(--space-2) 0; }
+.detail-daily .table-wrap { margin-top: var(--space-2); }
+
+.bar-chart { display: block; width: 100%; height: auto; overflow: visible; }
+.bar-axis { stroke: var(--color-ink-muted); stroke-width: 1; }
+.bar-grid { stroke: var(--color-rule); stroke-width: 1; stroke-dasharray: 3 4; }
+.bar-tick { fill: var(--color-ink-muted); font-size: 11px; font-family: var(--font-ui); }
+.bar { fill: rgb(139 120 255 / 0.5); transition: fill 160ms ease-out; }
+.bar-active { filter: drop-shadow(0 0 8px rgb(91 110 255 / 0.55)); }
+.bar-tooltip rect { fill: var(--color-surface-solid); stroke: rgb(255 255 255 / 0.18); }
+.bar-tooltip-date { fill: var(--color-ink-muted); font-size: 11px; font-family: var(--font-ui); }
+.bar-tooltip-value { fill: var(--color-ink); font-size: 13px; font-weight: 700; font-family: var(--font-ui); }
+
+.donut { display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
+.donut-chart { flex: none; width: 156px; height: 156px; }
+.donut-track { stroke: var(--color-lane-soft); }
+.donut-total { fill: var(--color-ink); font-size: 26px; font-weight: 800; font-family: var(--font-ui); }
+.donut-total-label { fill: var(--color-ink-muted); font-size: 10px; font-family: var(--font-ui); }
+.donut-late-bg { fill: rgb(246 189 91 / 0.18); }
+.donut-late-fg { fill: var(--color-late); }
+.donut-failed-bg { fill: rgb(170 178 208 / 0.16); }
+.donut-failed-fg { fill: var(--color-failed); }
+.donut-legend { flex: 1 1 160px; display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; font-size: var(--text-sm); }
+.donut-legend li { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: var(--space-2); }
+.legend-count { color: var(--color-ink-muted); font-size: var(--text-xs); }
+.legend-percent { min-width: 5ch; text-align: right; font-weight: 700; }
+.legend-mark { display: inline-block; width: 12px; height: 12px; }
+.legend-mark-on-time { border-radius: 50%; background: var(--gradient-accent); }
+.legend-mark-late { border-radius: 3px; background: repeating-linear-gradient(135deg, var(--color-late) 0 2px, rgb(246 189 91 / 0.2) 2px 4px); }
+.legend-mark-failed { transform: rotate(45deg) scale(0.85); border: 2px solid var(--color-failed); background: none; }
 
 @media (max-width: 640px) {
   .detail-backdrop { align-items: flex-end; justify-content: stretch; }
-  .detail-panel { width: 100%; height: auto; max-height: 85vh; border-left: 0; border-top: 1px solid var(--color-rule); border-radius: 12px 12px 0 0; }
+  .detail-panel { width: 100%; height: auto; max-height: 85vh; border-left: 0; border-top: 1px solid var(--color-rule); border-radius: var(--radius-card) var(--radius-card) 0 0; }
 }
 
 @keyframes panel-in-right { from { transform: translateX(32px); opacity: 0; } to { transform: none; opacity: 1; } }
@@ -31,6 +56,9 @@
 .detail-panel { animation: panel-in-right 260ms cubic-bezier(0.22, 1, 0.36, 1); }
 
 @media (max-width: 640px) {
+  .detail-totals { gap: var(--space-2); }
+  .detail-totals > div { padding: var(--space-2) var(--space-3); }
+  .detail-totals dd { font-size: var(--text-base); }
   .detail-panel { animation-name: panel-in-bottom; padding: var(--space-4); }
 }
 
