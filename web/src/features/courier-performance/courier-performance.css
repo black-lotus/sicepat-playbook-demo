@@ -59,9 +59,12 @@
   .detail-panel { width: 100%; height: auto; max-height: 85vh; border-left: 0; border-top: 1px solid var(--color-rule); border-radius: 12px 12px 0 0; }
 }
 
+/* Gerak garis finis: kolom Selisih tersembunyi sampai use-finish-line menandai baris data-settled="true" (animasi baris selesai). */
 @keyframes panel-in-right { from { transform: translateX(32px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes panel-in-bottom { from { transform: translateY(32px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+.gap-cell { opacity: 0; }
+[data-settled="true"] > .gap-cell { opacity: 1; transition: opacity 240ms ease-out; }
 .detail-backdrop { animation: backdrop-in 180ms ease-out; }
 .detail-panel { animation: panel-in-right 260ms cubic-bezier(0.22, 1, 0.36, 1); }
 
@@ -85,4 +88,5 @@
 
 @media (prefers-reduced-motion: reduce) {
   .detail-backdrop, .detail-panel { animation: none; }
+  [data-settled="true"] > .gap-cell { transition: none; }
 }

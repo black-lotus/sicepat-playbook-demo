@@ -21,4 +21,10 @@ describe('stylesheet performa kurir', () => {
     expect(featureCSS).not.toMatch(/^\s*\.table-wrap\s*\{/m);
     expect(featureCSS).toContain('.courier-performance-page .table-wrap');
   });
+
+  it('Selisih memudar masuk berdasarkan data-settled, bukan animasi saat mount', () => {
+    expect(featureCSS).toContain('[data-settled="true"] > .gap-cell');
+    expect(featureCSS).not.toMatch(/\.gap-cell\s*\{[^}]*animation/);
+    expect(featureCSS).not.toContain('@keyframes gap-in');
+  });
 });

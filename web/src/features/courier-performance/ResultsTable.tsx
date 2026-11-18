@@ -1,8 +1,11 @@
+import { useRef } from 'react';
+
 import type { CourierPerformance } from '../../api/types';
 import { formatGap } from '../../lib/format-gap';
 import { formatNumber } from '../../lib/format-number';
 import { formatPercent } from '../../lib/format-percent';
 import { DailyStrip } from './DailyStrip';
+import { useFinishLine } from './use-finish-line';
 
 interface ResultsTableProps {
   items: CourierPerformance[];
@@ -10,6 +13,9 @@ interface ResultsTableProps {
 }
 
 export function ResultsTable({ items, onSelect }: ResultsTableProps) {
+  const bodyRef = useRef<HTMLTableSectionElement>(null);
+  useFinishLine(bodyRef, items.map((item) => item.courierID));
+
   return (
     <div className="table-wrap">
       <table className="data-table results-table">
@@ -27,9 +33,9 @@ export function ResultsTable({ items, onSelect }: ResultsTableProps) {
             <th scope="col" className="num">Selisih</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody ref={bodyRef}>
           {items.map((item) => (
-            <tr key={item.courierID}>
+            <tr key={item.courierID} data-finish-key={item.courierID}>
               <td className="num figure">{item.rank}</td>
               <td>
                 <button type="button" className="link-button" onClick={() => onSelect(item.courierID)}>
@@ -42,7 +48,7 @@ export function ResultsTable({ items, onSelect }: ResultsTableProps) {
               <td className="num">{formatNumber(item.failed)}</td>
               <td className="num">{formatPercent(item.successRate)}</td>
               <td className="num">{formatPercent(item.slaRate)}</td>
-              <td className="num">{item.rank === 1 ? 'Pemimpin' : formatGap(item.successRateGap)}</td>
+              <td className="num gap-cell">{item.rank === 1 ? 'Pemimpin' : formatGap(item.successRateGap)}</td>
             </tr>
           ))}
         </tbody>
