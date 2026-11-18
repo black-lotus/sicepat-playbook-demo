@@ -1,13 +1,27 @@
 import { useId } from 'react';
 
-import { formatNumber } from '../../lib/format-number';
-import { formatPercent } from '../../lib/format-percent';
-import { compositionShares } from './chart-math';
-import type { CompositionKey, CompositionInput } from './chart-math';
+import { formatNumber } from '../lib/format-number';
+import { formatPercent } from '../lib/format-percent';
+import './donut-chart.css';
 
-interface DonutChartProps extends CompositionInput {
-  /** Total paket dari API, ditulis di tengah donut. */
+export type DonutPattern = 'solid' | 'diagonal' | 'dots';
+
+export interface DonutSegment {
+  key: string;
+  label: string;
+  value: number;
+  /** Proporsi 0..1 yang sudah dihitung pemanggil dari angka API; tidak pernah NaN. */
+  share: number;
+  /** Pola isi segmen agar tidak hanya dibedakan warna. Default `solid`. */
+  pattern?: DonutPattern;
+}
+
+interface DonutChartProps {
+  /** Total dari API, ditulis di tengah donut. */
   total: number;
+  segments: DonutSegment[];
+  /** Keterangan total, ditulis di bawah angka tengah dan di label aksesibel, misalnya "Total paket". */
+  label: string;
 }
 
 const SIZE = 160;
@@ -17,19 +31,19 @@ const STROKE = 22;
 /** Celah antarsegmen dalam satuan persen lingkaran (pathLength = 100). */
 const GAP = 1.2;
 
-/** Donut komposisi paket. Segmen dibedakan warna dan pola (polos, garis diagonal, titik); legenda memakai bentuk berbeda. */
-export function DonutChart({ total, delivered, onTime, failed }: DonutChartProps) {
+/** Donut generik. Segmen dibedakan warna dan pola (polos, garis diagonal, titik); legenda memakai bentuk berbeda. */
+export function DonutChart({ total, segments, label }: DonutChartProps) {
   const uid = useId().replace(/:/g, '');
   const gradientID = `donut-gradient-${uid}`;
-  const lateID = `donut-late-${uid}`;
-  const failedID = `donut-failed-${uid}`;
-  const shares = compositionShares({ delivered, onTime, failed });
+  const diagonalID = `donut-late-${uid}`;
+  const dotsID = `donut-failed-${uid}`;
+  const shares = segments;
   const visible = shares.filter((segment) => segment.share > 0);
   const gap = visible.length > 1 ? GAP : 0;
-  const stroke: Record<CompositionKey, string> = {
-    'on-time': `url(#${gradientID})`,
-    late: `url(#${lateID})`,
-    failed: `url(#${failedID})`,
+  const stroke: Record<DonutPattern, string> = {
+    solid: `url(#${gradientID})`,
+    diagonal: `url(#${diagonalID})`,
+    dots: `url(#${dotsID})`,
   };
 
   const arcs = visible.map((segment, index) => {
@@ -41,17 +55,17 @@ export function DonutChart({ total, delivered, onTime, failed }: DonutChartProps
 
   return (
     <div className="donut">
-      <svg className="donut-chart" viewBox={`0 0 ${SIZE} ${SIZE}`} role="img" aria-label={`Komposisi ${formatNumber(total)} paket: ${summary}`}>
+      <svg className="donut-chart" viewBox={`0 0 ${SIZE} ${SIZE}`} role="img" aria-label={`${label} ${formatNumber(total)}: ${summary}`}>
         <defs>
           <linearGradient id={gradientID} x1="0" y1="0" x2="1" y2="1">
             <stop offset="0" stopColor="var(--color-accent-from)" />
             <stop offset="1" stopColor="var(--color-accent-to)" />
           </linearGradient>
-          <pattern id={lateID} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <pattern id={diagonalID} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
             <rect className="donut-late-bg" width="6" height="6" />
             <rect className="donut-late-fg" width="3" height="6" />
           </pattern>
-          <pattern id={failedID} width="6" height="6" patternUnits="userSpaceOnUse">
+          <pattern id={dotsID} width="6" height="6" patternUnits="userSpaceOnUse">
             <rect className="donut-failed-bg" width="6" height="6" />
             <circle className="donut-failed-fg" cx="3" cy="3" r="1.5" />
           </pattern>
@@ -67,7 +81,7 @@ export function DonutChart({ total, delivered, onTime, failed }: DonutChartProps
             cy={CENTER}
             r={RADIUS}
             fill="none"
-            stroke={stroke[segment.key]}
+            stroke={stroke[segment.pattern ?? 'solid']}
             strokeWidth={STROKE}
             pathLength={100}
             strokeDasharray={`${length} ${100 - length}`}
@@ -76,12 +90,12 @@ export function DonutChart({ total, delivered, onTime, failed }: DonutChartProps
           />
         ))}
         <text className="donut-total" x={CENTER} y={CENTER - 2} textAnchor="middle">{formatNumber(total)}</text>
-        <text className="donut-total-label" x={CENTER} y={CENTER + 16} textAnchor="middle">Total paket</text>
+        <text className="donut-total-label" x={CENTER} y={CENTER + 16} textAnchor="middle">{label}</text>
       </svg>
       <ul className="donut-legend">
         {shares.map((segment) => (
           <li key={segment.key} data-segment={segment.key}>
-            <span className={`legend-mark legend-mark-${segment.key}`} aria-hidden="true" />
+            <span className={`legend-mark legend-mark-${segment.pattern ?? 'solid'}`} aria-hidden="true" />
             <span className="legend-name">{segment.label}</span>
             <span className="legend-count">{formatNumber(segment.value)}</span>
             <span className="legend-percent">{formatPercent(segment.share)}</span>

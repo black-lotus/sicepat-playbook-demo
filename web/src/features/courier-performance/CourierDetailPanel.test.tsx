@@ -33,7 +33,7 @@ describe('CourierDetailPanel', () => {
     expect(within(daily).getAllByRole('row')).toHaveLength(8);
     expect(within(daily).getByRole('columnheader', { name: 'Tepat SLA' })).toBeInTheDocument();
     expect(within(dialog).getByRole('img', { name: /Grafik batang paket terkirim per hari/ })).toBeInTheDocument();
-    expect(within(dialog).getByRole('img', { name: /Komposisi 35 paket/ })).toBeInTheDocument();
+    expect(within(dialog).getByRole('img', { name: /Total paket 35: Tepat SLA/ })).toBeInTheDocument();
     expect(within(dialog).getByRole('heading', { name: 'Komposisi paket' })).toBeInTheDocument();
   });
 
