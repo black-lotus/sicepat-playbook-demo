@@ -34,7 +34,7 @@ Service di `docker-compose.yml`:
 | `redis` | Redis 7 untuk cache | `6379` | - |
 | `kafka` | Kafka (KRaft) | `9092` | - |
 
-Service backend (`backend`, `worker`, `consumer`) baru jalan setelah `migrate` selesai. Di dalam Compose, Kafka diakses lewat `kafka:29092`; dari host lewat `localhost:9092`.
+Service backend (`backend`, `worker`, `consumer`) baru jalan setelah `migrate` selesai. Bila port host default sudah dipakai aplikasi lain, ubah lewat `.env` (`BACKEND_HOST_PORT`, `WEB_HOST_PORT`, `POSTGRES_HOST_PORT`, `REDIS_HOST_PORT`, `KAFKA_HOST_PORT`); port di dalam Compose tidak berubah. Di dalam Compose, Kafka diakses lewat `kafka:29092`; dari host lewat `localhost:9092`.
 
 Perintah umum:
 ```bash
