@@ -25,10 +25,16 @@ Service di `docker-compose.yml`:
 
 | Service | Isi | Port host | Perintah di dalam container |
 |---|---|---|---|
-| `backend` | API Go dengan repository in-memory berisi data contoh | `8080` | `go run ./cmd/api` |
+| `backend` | REST API Go | `8080` | `go run ./cmd/api` |
+| `worker` | Agregasi KPI harian berkala | - | `go run ./cmd/worker` |
+| `consumer` | Membaca event pengiriman dari Kafka | - | `go run ./cmd/consumer` |
 | `web` | Dev server Vite | `5173` | `npm run dev -- --host` |
+| `postgres` | PostgreSQL 16 | `5432` | - |
+| `migrate` | Menjalankan `backend/migrations` sekali lalu berhenti | - | `migrate up` |
+| `redis` | Redis 7 untuk cache | `6379` | - |
+| `kafka` | Kafka (KRaft) | `9092` | - |
 
-Belum ada database, Kafka, atau Redis. Kalau nanti ditambahkan, tambahkan sebagai service baru di file yang sama.
+Service backend (`backend`, `worker`, `consumer`) baru jalan setelah `migrate` selesai. Di dalam Compose, Kafka diakses lewat `kafka:29092`; dari host lewat `localhost:9092`.
 
 Perintah umum:
 ```bash
@@ -52,7 +58,7 @@ Konvensi:
 ## Frontend
 
 ### Arsitektur singkat
-- Bahasa: TypeScript (mode `strict`). Versi Node dan dependensi mengikuti `web/package.json`.
+- Bahasa: TypeScript (mode `strict`). Versi Node mengikuti `web/.nvmrc`, dependensi mengikuti `web/package.json`.
 - Stack: React, Vite, React Router, TanStack Query untuk data fetching dan cache.
 - Struktur folder di `web/src/`:
   - `app/` berisi entry, router, dan provider global.
@@ -62,7 +68,7 @@ Konvensi:
   - `api/` berisi client HTTP, tipe response, dan hook query (`useCourierMetrics`).
   - `lib/` berisi helper murni, misalnya format angka, persen, dan tanggal.
 - Alur data: halaman memanggil hook query di `api/`, hook memanggil client HTTP, komponen hanya menerima data lewat props.
-- Base URL API dibaca dari environment variable `VITE_API_BASE_URL`.
+- Base URL API dibaca dari environment variable `VITE_API_BASE_URL`. Saat development, biarkan kosong: Vite meneruskan `/api` ke `API_PROXY_TARGET` (default `http://localhost:8080`).
 
 ### Konvensi kode
 Gaya penamaan:
@@ -104,7 +110,7 @@ Modul utama dan alurnya:
   - `internal/domain/` berisi entity dan aturan bisnis (misalnya `Courier`, `Delivery`, `PerformanceMetric`), tanpa dependensi ke infrastruktur.
   - `internal/port/` berisi interface untuk repository, publisher, dan cache.
   - `internal/service/` berisi use case, misalnya menghitung skor performa atau merangkum KPI harian.
-  - `internal/adapter/` berisi implementasi port: `http` (handler REST), `postgres`, `redis`, `kafka`.
+  - `internal/adapter/` berisi implementasi port: `httpapi` (handler REST), `postgres`, `redis`, `kafka`.
 - Alur data:
   1. Event status paket dan aktivitas kurir masuk lewat Kafka.
   2. Consumer menyimpannya ke PostgreSQL.
@@ -145,7 +151,7 @@ Pola yang dihindari:
 
 ### Test
 Framework dan cara menjalankannya (dari folder `backend/`):
-- Memakai `testing` bawaan Go dengan pola table-driven, ditambah `testify` untuk assertion dan mock dari `mockery`.
+- Memakai `testing` bawaan Go dengan pola table-driven, ditambah `testify` untuk assertion dan mock dari `mockery`. Mock di `internal/port/mocks` dibuat ulang dengan `make mocks` (`go tool mockery`, versinya terkunci di `go.mod`) setiap kali interface di `internal/port` berubah.
 - Unit test dijalankan dengan `go test ./...`, dan race detector dengan `go test -race ./...`.
 - Integration test (PostgreSQL, Redis, Kafka) diberi build tag `integration` dan dijalankan dengan `go test -tags=integration ./...`.
 - Handler HTTP diuji dengan `net/http/httptest`, termasuk bentuk response sukses dan error.

@@ -1,2 +1,19 @@
-.env
+# Backend
+backend/coverage.out
+backend/bin/
+
+# Frontend
 node_modules/
+web/dist/
+web/coverage/
+web/*.tsbuildinfo
+
+# Environment lokal
+.env
+.env.local
+*.local
+
+# OS dan editor
+.DS_Store
+.idea/
+.vscode/

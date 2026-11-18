@@ -1,0 +1,9 @@
+template: testify
+dir: "{{.InterfaceDir}}/mocks"
+filename: "mock_{{.InterfaceName | snakecase}}.go"
+pkgname: mocks
+structname: "{{.InterfaceName}}"
+packages:
+  github.com/black-lotus/sicepat-playbook-demo/backend/internal/port:
+    config:
+      all: true
