@@ -41,6 +41,7 @@ migrate-up:
 migrate-down:
 	docker run --rm --network host -v $(CURDIR)/migrations:/migrations $(MIGRATE_IMAGE) -path=/migrations -database "$(DATABASE_URL)" down 1
 
-# Mengisi data contoh (idempoten). Butuh Docker; DATABASE_URL harus bisa dijangkau dari network host.
+# Mengisi data contoh dari backend/seeds/seed.sql (kurir, delivery_events, courier_daily_metrics; idempoten,
+# satu transaksi). Butuh Docker; DATABASE_URL harus bisa dijangkau dari network host.
 seed:
-	docker run --rm --network host -v $(CURDIR)/seeds:/seeds:ro $(SEED_IMAGE) psql "$(DATABASE_URL)" -v ON_ERROR_STOP=1 -f /seeds/demo.sql
+	docker run --rm --network host -v $(CURDIR)/seeds:/seeds:ro $(SEED_IMAGE) psql "$(DATABASE_URL)" -v ON_ERROR_STOP=1 -f /seeds/seed.sql

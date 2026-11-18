@@ -88,10 +88,10 @@ services:
       postgres:
         condition: service_healthy
 
-  # Mengisi data contoh backend/seeds/demo.sql (idempoten) setelah migrasi, lalu berhenti.
+  # Mengisi data contoh backend/seeds/seed.sql (idempoten, satu transaksi) setelah migrasi, lalu berhenti.
   seed:
     image: postgres:16-alpine
-    command: ["psql", "postgres://sigesit:sigesit@postgres:5432/sigesit", "-v", "ON_ERROR_STOP=1", "-f", "/seeds/demo.sql"]
+    command: ["psql", "postgres://sigesit:sigesit@postgres:5432/sigesit", "-v", "ON_ERROR_STOP=1", "-f", "/seeds/seed.sql"]
     volumes:
       - ./backend/seeds:/seeds:ro
     depends_on:
