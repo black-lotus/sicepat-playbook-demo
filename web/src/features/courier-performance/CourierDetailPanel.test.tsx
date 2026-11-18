@@ -26,11 +26,15 @@ describe('CourierDetailPanel', () => {
 
     const dialog = screen.getByRole('dialog', { name: 'Dewi Lestari' });
     expect(dialog).toHaveAttribute('aria-modal', 'true');
+    expect(within(dialog).getByRole('button', { name: 'Tutup' })).toHaveFocus();
+    // Tabel harian adalah alternatif teks di dalam <details>; dibuka dulu seperti pengguna.
+    await user.click(within(dialog).getByText('Rincian harian'));
     const daily = within(dialog).getByRole('table');
     expect(within(daily).getAllByRole('row')).toHaveLength(8);
     expect(within(daily).getByRole('columnheader', { name: 'Tepat SLA' })).toBeInTheDocument();
-    expect(within(dialog).getAllByRole('img').length).toBeGreaterThan(0);
-    expect(within(dialog).getByRole('button', { name: 'Tutup' })).toHaveFocus();
+    expect(within(dialog).getByRole('img', { name: /Grafik batang paket terkirim per hari/ })).toBeInTheDocument();
+    expect(within(dialog).getByRole('img', { name: /Komposisi 35 paket/ })).toBeInTheDocument();
+    expect(within(dialog).getByRole('heading', { name: 'Komposisi paket' })).toBeInTheDocument();
   });
 
   it('menutup dengan Esc dan mengembalikan fokus ke pemicu', async () => {
@@ -64,7 +68,7 @@ describe('CourierDetailPanel', () => {
     expect(screen.getByRole('dialog', { name: 'Budi Santoso' })).toBeInTheDocument();
   });
 
-  it('Tab dan Shift+Tab tetap di panel; fokus tidak lari ke halaman di belakang', async () => {
+  it('Tab dan Shift+Tab berputar di panel (Tutup dan ringkasan rincian harian); fokus tidak lari ke halaman di belakang', async () => {
     const user = userEvent.setup();
     const table = await renderPage();
 
@@ -73,9 +77,14 @@ describe('CourierDetailPanel', () => {
     const close = within(dialog).getByRole('button', { name: 'Tutup' });
     expect(close).toHaveFocus();
 
-    // Tutup adalah satu-satunya elemen fokus di panel: Tab maju dan mundur harus kembali ke dirinya.
+    // Elemen fokus panel: Tutup lalu ringkasan "Rincian harian". Tab maju dan mundur berputar di antara keduanya.
+    const summary = within(dialog).getByText('Rincian harian');
+    await user.tab();
+    expect(summary).toHaveFocus();
     await user.tab();
     expect(close).toHaveFocus();
+    await user.tab({ shift: true });
+    expect(summary).toHaveFocus();
     await user.tab({ shift: true });
     expect(close).toHaveFocus();
   });
