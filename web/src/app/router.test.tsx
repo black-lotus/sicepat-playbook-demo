@@ -17,7 +17,7 @@ function renderAt(path: string) {
 
 describe('router', () => {
   beforeEach(() => {
-    server.use(http.get('/api/v1/courier-metrics', () => HttpResponse.json({ data: [], meta: { page: 1, page_size: 20, total: 0 } })));
+    server.use(http.get('/api/v1/courier-performance', () => HttpResponse.json({ data: [], meta: { page: 1, page_size: 50, total: 0 } })));
   });
 
   it('mengarahkan root ke halaman performa kurir', async () => {

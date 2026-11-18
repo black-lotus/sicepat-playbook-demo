@@ -3,7 +3,7 @@ import { useState } from 'react';
 import type { CourierMetricFilter } from '../../api/types';
 import { lastSevenDays } from '../../lib/date';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 50;
 
 /** State filter halaman performa kurir. Mengubah periode atau cabang kembali ke halaman 1. */
 export function useCourierPerformanceFilter(today: Date = new Date()) {
