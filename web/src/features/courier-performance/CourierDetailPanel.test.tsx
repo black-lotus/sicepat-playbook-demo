@@ -18,7 +18,7 @@ async function renderPage() {
 }
 
 describe('CourierDetailPanel', () => {
-  it('membuka dialog dari tabel dengan tabel harian', async () => {
+  it('membuka dialog dari tabel dengan tabel harian dan grafik', async () => {
     const user = userEvent.setup();
     const table = await renderPage();
 
@@ -29,6 +29,7 @@ describe('CourierDetailPanel', () => {
     const daily = within(dialog).getByRole('table');
     expect(within(daily).getAllByRole('row')).toHaveLength(8);
     expect(within(daily).getByRole('columnheader', { name: 'Tepat SLA' })).toBeInTheDocument();
+    expect(within(dialog).getAllByRole('img').length).toBeGreaterThan(0);
     expect(within(dialog).getByRole('button', { name: 'Tutup' })).toHaveFocus();
   });
 

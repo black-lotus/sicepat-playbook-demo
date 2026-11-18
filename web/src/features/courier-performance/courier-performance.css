@@ -42,6 +42,17 @@
 .detail-totals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); margin: 0; }
 .detail-totals dt { font-size: var(--text-xs); color: var(--color-ink-muted); }
 .detail-totals dd { margin: 0; font-family: var(--font-figure); font-size: var(--text-lg); font-weight: 700; font-variant-numeric: tabular-nums; }
+.lane-chart { width: 100%; height: auto; }
+.lane-axis { stroke: var(--color-ink-muted); stroke-width: 1; }
+.lane-grid { stroke: var(--color-rule); stroke-width: 1; }
+.lane-tick { fill: var(--color-ink-muted); font-size: 11px; font-family: var(--font-ui); }
+.lane-line { stroke-width: 2; }
+.lane-line-delivered { stroke: var(--color-lane); }
+.lane-line-on-time { stroke: var(--color-lane); stroke-dasharray: 5 4; }
+.lane-dot { fill: var(--color-lane); }
+.detail-legend { display: flex; gap: var(--space-4); margin: 0; font-size: var(--text-sm); color: var(--color-ink-muted); }
+.detail-legend span::before { content: ''; display: inline-block; width: 20px; margin-right: var(--space-2); vertical-align: middle; border-top: 2px solid var(--color-lane); }
+.detail-legend .legend-on-time::before { border-top-style: dashed; }
 
 @media (max-width: 640px) {
   .detail-backdrop { align-items: flex-end; justify-content: stretch; }
