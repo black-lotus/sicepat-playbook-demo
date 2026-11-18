@@ -16,6 +16,39 @@ agregat KPI, lalu frontend menampilkannya lewat REST API.
 Saat bekerja di satu bagian, ikuti hanya konvensi bagian itu. Perubahan yang menyentuh kontrak API
 (endpoint, bentuk request atau response) harus disepakati kedua sisi.
 
+## Local development (Docker Compose)
+Seluruh stack lokal dijalankan dengan satu perintah dari root repo. Prasyarat: Docker dengan Compose v2.
+
+Setup pertama kali: `cp .env.example .env`, lalu isi `GO_VERSION` dan `NODE_VERSION` (samakan dengan `backend/go.mod` dan `web/package.json`). Compose menolak jalan bila keduanya kosong. Dockerfile dev ada di `docker/`.
+
+Service di `docker-compose.yml`:
+
+| Service | Isi | Port host | Perintah di dalam container |
+|---|---|---|---|
+| `backend` | API Go dengan repository in-memory berisi data contoh | `8080` | `go run ./cmd/api` |
+| `web` | Dev server Vite | `5173` | `npm run dev -- --host` |
+
+Belum ada database, Kafka, atau Redis. Kalau nanti ditambahkan, tambahkan sebagai service baru di file yang sama.
+
+Perintah umum:
+```bash
+docker compose up --build        # jalankan semua service, lalu buka http://localhost:5173/courier-performance
+docker compose up backend        # hanya BE, untuk tim BE
+docker compose logs -f backend   # ikuti log satu service
+docker compose down              # hentikan dan hapus container
+docker compose down -v           # sekaligus hapus volume (reset node_modules dan cache)
+```
+
+Konvensi:
+- Source `backend/` dan `web/` di-mount sebagai volume supaya perubahan kode langsung terbaca (hot reload di `web`, restart `backend` dengan `docker compose restart backend`).
+- `node_modules` memakai named volume sendiri, jangan di-mount dari host, supaya binary host (macOS) dan container (Linux) tidak bentrok.
+- Versi image Go dan Node diatur lewat `.env` dan mengikuti `backend/go.mod` dan `web/package.json`. Jangan pakai tag `latest`.
+- `web` memanggil API lewat proxy Vite `/api`, bukan langsung ke host lain, jadi tidak perlu CORS dan `VITE_API_BASE_URL` dibiarkan kosong. Di dalam Compose, target proxy adalah `http://backend:8080` (bukan `localhost`), diatur lewat environment variable `API_PROXY_TARGET` yang dibaca `web/vite.config.ts` dengan default `http://localhost:8080` untuk jalan tanpa Docker.
+- Konfigurasi lewat environment variable di `docker-compose.yml` (`HTTP_ADDR` untuk `backend`). Rahasia dan nilai khusus mesin ditaruh di `.env` yang tidak di-commit; sediakan `.env.example` bila ada variabel baru.
+- Pakai data contoh atau data sintetis. Jangan memasukkan data pribadi kurir atau penerima (nomor HP, NIK, alamat) ke seed, fixture, maupun volume lokal.
+- Menjalankan test tetap lewat perintah di bagian Test masing-masing. Untuk di dalam container: `docker compose exec web npm test` atau `docker compose exec backend go test ./...`.
+- Compose dipakai untuk development lokal saja, bukan untuk deployment.
+
 ## Frontend
 
 ### Arsitektur singkat
