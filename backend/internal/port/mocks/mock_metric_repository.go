@@ -96,6 +96,72 @@ func (_c *MetricRepository_AggregateDaily_Call) RunAndReturn(run func(ctx contex
 	return _c
 }
 
+// ListBranchPerformance provides a mock function for the type MetricRepository
+func (_mock *MetricRepository) ListBranchPerformance(ctx context.Context, filter domain.MetricFilter) (domain.BranchPerformancePage, error) {
+	ret := _mock.Called(ctx, filter)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListBranchPerformance")
+	}
+
+	var r0 domain.BranchPerformancePage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.MetricFilter) (domain.BranchPerformancePage, error)); ok {
+		return returnFunc(ctx, filter)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.MetricFilter) domain.BranchPerformancePage); ok {
+		r0 = returnFunc(ctx, filter)
+	} else {
+		r0 = ret.Get(0).(domain.BranchPerformancePage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, domain.MetricFilter) error); ok {
+		r1 = returnFunc(ctx, filter)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MetricRepository_ListBranchPerformance_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListBranchPerformance'
+type MetricRepository_ListBranchPerformance_Call struct {
+	*mock.Call
+}
+
+// ListBranchPerformance is a helper method to define mock.On call
+//   - ctx context.Context
+//   - filter domain.MetricFilter
+func (_e *MetricRepository_Expecter) ListBranchPerformance(ctx interface{}, filter interface{}) *MetricRepository_ListBranchPerformance_Call {
+	return &MetricRepository_ListBranchPerformance_Call{Call: _e.mock.On("ListBranchPerformance", ctx, filter)}
+}
+
+func (_c *MetricRepository_ListBranchPerformance_Call) Run(run func(ctx context.Context, filter domain.MetricFilter)) *MetricRepository_ListBranchPerformance_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 domain.MetricFilter
+		if args[1] != nil {
+			arg1 = args[1].(domain.MetricFilter)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MetricRepository_ListBranchPerformance_Call) Return(branchPerformancePage domain.BranchPerformancePage, err error) *MetricRepository_ListBranchPerformance_Call {
+	_c.Call.Return(branchPerformancePage, err)
+	return _c
+}
+
+func (_c *MetricRepository_ListBranchPerformance_Call) RunAndReturn(run func(ctx context.Context, filter domain.MetricFilter) (domain.BranchPerformancePage, error)) *MetricRepository_ListBranchPerformance_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListCourierMetrics provides a mock function for the type MetricRepository
 func (_mock *MetricRepository) ListCourierMetrics(ctx context.Context, filter domain.MetricFilter) (domain.CourierMetricPage, error) {
 	ret := _mock.Called(ctx, filter)

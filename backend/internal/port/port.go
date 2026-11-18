@@ -12,6 +12,7 @@ import (
 type MetricRepository interface {
 	ListCourierMetrics(ctx context.Context, filter domain.MetricFilter) (domain.CourierMetricPage, error)
 	ListCourierPerformance(ctx context.Context, filter domain.MetricFilter) (domain.CourierPerformancePage, error)
+	ListBranchPerformance(ctx context.Context, filter domain.MetricFilter) (domain.BranchPerformancePage, error)
 	AggregateDaily(ctx context.Context, date time.Time) error
 }
 
