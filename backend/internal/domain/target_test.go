@@ -151,3 +151,33 @@ func TestCompareTarget(t *testing.T) {
 	assert.Equal(t, domain.TargetStatus("met"), domain.TargetMet)
 	assert.Equal(t, domain.TargetStatus("below"), domain.TargetBelow)
 }
+
+func TestEvaluateTarget(t *testing.T) {
+	perf := domain.BranchPerformance{BranchID: "JKT01", TotalPackages: 1000, Delivered: 833, OnTime: 700}
+	// success 0,833; sla 700/833 = 0,84034
+
+	t.Run("nil bila tanpa target", func(t *testing.T) {
+		assert.Nil(t, domain.EvaluateTarget(perf, nil))
+	})
+	t.Run("campuran met dan below", func(t *testing.T) {
+		pt := &domain.PeriodTarget{SuccessRate: 0.85, SLARate: 0.8, DeliveredPackages: 900}
+		got := domain.EvaluateTarget(perf, pt)
+		require.NotNil(t, got)
+		assert.Equal(t, *pt, got.Target)
+		assert.Equal(t, domain.TargetBelow, got.SuccessRateStatus)
+		assert.Equal(t, domain.TargetMet, got.SLARateStatus)
+		assert.Equal(t, domain.TargetBelow, got.DeliveredStatus)
+	})
+	t.Run("volume sama dengan target berarti met", func(t *testing.T) {
+		got := domain.EvaluateTarget(perf, &domain.PeriodTarget{SuccessRate: 0.5, SLARate: 0.5, DeliveredPackages: 833})
+		require.NotNil(t, got)
+		assert.Equal(t, domain.TargetMet, got.DeliveredStatus)
+		assert.Equal(t, domain.TargetMet, got.SuccessRateStatus)
+	})
+	t.Run("cabang tanpa paket", func(t *testing.T) {
+		got := domain.EvaluateTarget(domain.BranchPerformance{}, &domain.PeriodTarget{SuccessRate: 0.9, SLARate: 0.9, DeliveredPackages: 10})
+		require.NotNil(t, got)
+		assert.Equal(t, domain.TargetBelow, got.SuccessRateStatus)
+		assert.Equal(t, domain.TargetBelow, got.DeliveredStatus)
+	})
+}
