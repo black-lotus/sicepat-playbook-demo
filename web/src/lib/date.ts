@@ -55,3 +55,16 @@ export function formatDayMonth(isoDate: string): string {
   const { day, month } = dayAndMonth(isoDate);
   return `${day} ${month}`;
 }
+
+const weekdayFormatter = new Intl.DateTimeFormat('id-ID', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+
+/** Hari, tanggal, dan bulan singkat untuk keterangan grafik, misalnya "Kam, 12 Nov". */
+export function formatWeekdayDate(isoDate: string): string {
+  return weekdayFormatter.format(new Date(`${isoDate}T00:00:00Z`));
+}
+
+/** Label sumbu harian: hanya tanggal ("12"), atau "12 Nov" bila `withMonth`. */
+export function formatDayLabel(isoDate: string, withMonth = false): string {
+  const { day, month } = dayAndMonth(isoDate);
+  return withMonth ? `${day} ${month}` : String(day);
+}

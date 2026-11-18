@@ -1,14 +1,20 @@
 .branch-summary-page { display: grid; gap: var(--space-4); }
 .branch-list { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); }
-.branch-card { display: grid; gap: var(--space-3); height: 100%; padding: var(--space-4); background: var(--color-surface); border: 1px solid var(--color-rule); border-radius: var(--radius-lg, 12px); color: inherit; text-decoration: none; }
+/* li adalah grid supaya kartu mengisi tinggi baris tanpa height: 100% (persen pada tinggi auto membuat baris lebih pendek dari isi kartu dan kartu menimpa baris berikutnya). */
+.branch-list > li { display: grid; min-width: 0; }
+.branch-card { position: relative; display: grid; align-content: start; gap: var(--space-3); min-width: 0; padding: var(--space-4); background: var(--color-surface); border: 1px solid var(--color-rule); border-radius: var(--radius-lg, 12px); color: inherit; text-decoration: none; }
 .branch-card:hover { border-color: var(--color-ink-muted); }
-.branch-card:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.branch-card:has(.branch-card-name:focus-visible) { outline: 2px solid var(--color-lane); outline-offset: 2px; }
+/* Tautan meregang menutupi kartu; grafik harian (z-index 2) tetap di atasnya agar bisa di-hover dan difokus. */
+.branch-card-name::after { content: ''; position: absolute; inset: 0; z-index: 1; border-radius: var(--radius-lg, 12px); }
+.branch-card-name:focus-visible { outline: none; }
+.branch-card .daily-chart { position: relative; z-index: 2; }
 .branch-card-head { display: flex; align-items: center; gap: var(--space-3); }
 .branch-card-rank { font-weight: 800; font-size: var(--text-lg, 1.125rem); min-width: 2ch; color: var(--color-ink-muted); }
-.branch-card-name { font-weight: 700; font-size: var(--text-lg, 1.125rem); }
+.branch-card-name { min-width: 0; font-weight: 700; font-size: var(--text-lg, 1.125rem); color: inherit; text-decoration: none; overflow-wrap: anywhere; }
 .branch-card-couriers { margin-left: auto; color: var(--color-ink-muted); font-size: var(--text-sm); }
 .branch-card-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); }
 .branch-card-stats > span { display: grid; min-width: 0; }
 .branch-card-label { color: var(--color-ink-muted); font-size: var(--text-xs); }
-.branch-card-targets { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); }
+.branch-card-targets { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-2) var(--space-3); min-width: 0; }
 .branch-card-target { display: grid; gap: 2px; }

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { delay, http, HttpResponse } from 'msw';
 import { Route, Routes, useLocation } from 'react-router-dom';
 
+import { nestedInteractive } from '../../test/a11y';
 import { branchPerformanceDTOs } from '../../test/fixtures';
 import { renderWithProviders } from '../../test/render';
 import { server } from '../../test/server';
@@ -77,6 +78,7 @@ describe('BranchSummaryPage', () => {
     expect(within(card(cards, 0)).getAllByText(/Tercapai|Di bawah target/)).toHaveLength(3);
     expect(within(card(cards, 1)).queryByText(/Tercapai|Di bawah target/)).toBeNull();
     expect(screen.getByRole('navigation', { name: 'Pagination' })).toBeInTheDocument();
+    expect(nestedInteractive(list)).toEqual([]);
   });
 
   it('klik kartu menavigasi ke performa kurir dengan filter yang sama', async () => {

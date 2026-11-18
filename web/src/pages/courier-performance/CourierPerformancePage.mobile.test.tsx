@@ -78,7 +78,7 @@ describe('CourierPerformancePage di layar sempit', () => {
     expect(items[0]).toHaveTextContent('Budi Santoso');
     expect(items[0]).toHaveTextContent('90,0%');
     expect(items[3]).toHaveTextContent('Sari Wulandari');
-    expect(within(items[0] as HTMLElement).getByRole('img', { name: /Tren harian 7 hari/ })).toBeInTheDocument();
+    expect(within(items[0] as HTMLElement).getByRole('group', { name: /Tren harian 7 hari/ })).toBeInTheDocument();
   });
 
   it('membuka panel detail dari daftar', async () => {

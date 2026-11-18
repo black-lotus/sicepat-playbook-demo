@@ -28,18 +28,15 @@ export function Podium({ items, onSelect }: PodiumProps) {
         const isHero = item.rank === 1;
         return (
           <li key={item.courierID} className={`podium-item${isHero ? ' podium-item-hero' : ''}`} data-finish-key={item.courierID}>
-            <button
-              type="button"
-              className={`podium-card podium-${tone}${isHero ? ' podium-hero' : ''}`}
-              onClick={() => onSelect(item.courierID)}
-            >
+            {/* Kartu adalah kontainer biasa: nama kurir adalah tombolnya (::after meregang menutupi kartu), jadi grafik harian tidak bersarang di dalam tombol. */}
+            <div className={`podium-card podium-${tone}${isHero ? ' podium-hero' : ''}`}>
               {isHero ? (
                 <>
                   <span className="podium-eyebrow">Kurir terbaik periode ini</span>
-                  <span className="podium-who">
+                  <button type="button" className="podium-who podium-select" onClick={() => onSelect(item.courierID)}>
                     <Avatar courierID={item.courierID} name={name} medal={tone} size="lg" />
                     <span className="podium-name">{name}</span>
-                  </span>
+                  </button>
                   <span className="podium-figure">{formatPercent(item.successRate)}</span>
                   <span className="podium-label">Keberhasilan</span>
                   <span className="podium-chip">
@@ -50,13 +47,13 @@ export function Podium({ items, onSelect }: PodiumProps) {
                 </>
               ) : (
                 <>
-                  <span className="podium-who">
+                  <button type="button" className="podium-who podium-select" onClick={() => onSelect(item.courierID)}>
                     <Avatar courierID={item.courierID} name={name} medal={tone} size="md" />
                     <span className="podium-who-text">
                       <span className="podium-pos">Pos {item.rank}</span>
                       <span className="podium-name">{name}</span>
                     </span>
-                  </span>
+                  </button>
                   <span className="podium-figure">{formatPercent(item.successRate)}</span>
                   <span className="podium-label">Keberhasilan</span>
                   <span className="podium-meta">
@@ -64,8 +61,8 @@ export function Podium({ items, onSelect }: PodiumProps) {
                   </span>
                 </>
               )}
-              <DailyStrip daily={item.daily} size="md" decorative />
-            </button>
+              <DailyStrip daily={item.daily} size="md" />
+            </div>
           </li>
         );
       })}
