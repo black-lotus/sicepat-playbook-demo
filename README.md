@@ -5,6 +5,15 @@ Dashboard untuk memantau performa SiGesit (kurir SiCepat). Konvensi tim ada di [
 - `backend/`: API, worker, dan consumer (Go).
 - `web/`: dashboard frontend (React, TypeScript, Vite).
 
+## Menjalankan semuanya dengan satu perintah
+
+```sh
+make dev     # Postgres (55432) dan Redis (56379) di container, migrasi, seed, lalu API (18080) dan web (5173)
+make help    # daftar perintah lain: infra, migrate, seed, api, web, stop-infra, clean-infra, up, down, test, lint
+```
+Port bisa diubah, misalnya `make dev API_PORT=18081 WEB_PORT=5174`. `make dev` memakai port yang tidak bentrok
+dengan Postgres atau Redis lain di mesin; `make up` menjalankan semua service lewat docker compose.
+
 ## Menjalankan secara lokal
 
 Dengan Docker Compose (detail di bagian "Local development" di [CLAUDE.md](CLAUDE.md)):
