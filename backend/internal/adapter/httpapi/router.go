@@ -12,6 +12,7 @@ type Handlers struct {
 	CourierPerformance *CourierPerformanceHandler
 	KPITargets         *KPITargetHandler
 	FailedDeliveries   *FailedDeliveryHandler
+	BranchPerformance  *BranchPerformanceHandler
 }
 
 // NewRouter menyusun semua route API beserta middleware.
@@ -31,6 +32,10 @@ func NewRouter(h Handlers, logger *slog.Logger) http.Handler {
 	}
 	if h.FailedDeliveries != nil {
 		mux.HandleFunc("GET /api/v1/failed-deliveries/summary", h.FailedDeliveries.Summary)
+	}
+
+	if h.BranchPerformance != nil {
+		mux.HandleFunc("GET /api/v1/branch-performance", h.BranchPerformance.List)
 	}
 
 	return recoverer(logger, requestLogger(logger, mux))

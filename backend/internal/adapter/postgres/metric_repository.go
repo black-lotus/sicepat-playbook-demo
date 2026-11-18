@@ -164,6 +164,100 @@ func (r *MetricRepository) ListCourierPerformance(ctx context.Context, f domain.
 	return page, nil
 }
 
+// branchAggCTE mengagregasi per cabang untuk periode ($1, $2). Filter cabang sengaja tidak dipakai.
+// Rumus success rate sama dengan domain (delivered / total, 0 bila total 0).
+const branchAggCTE = `
+agg AS (
+    SELECT m.branch_id,
+           COUNT(DISTINCT m.courier_id)::int AS courier_count,
+           SUM(m.total_packages)::int AS total_packages,
+           SUM(m.delivered)::int      AS delivered,
+           SUM(m.failed)::int         AS failed,
+           SUM(m.on_time)::int        AS on_time,
+           COALESCE(SUM(m.delivered)::float8 / NULLIF(SUM(m.total_packages), 0), 0) AS success_rate
+    FROM courier_daily_metrics m
+    WHERE m.date BETWEEN $1::date AND $2::date
+    GROUP BY m.branch_id
+)`
+
+// listBranchPerformanceSQL memberi peringkat global cabang lalu memotong satu halaman.
+// Rank dan total dihitung sebelum LIMIT sehingga stabil di semua halaman.
+const listBranchPerformanceSQL = `
+WITH` + branchAggCTE + `, ranked AS (
+    SELECT agg.*,
+           ROW_NUMBER() OVER (ORDER BY success_rate DESC, branch_id ASC) AS rank,
+           COUNT(*) OVER ()                                              AS total
+    FROM agg
+)
+SELECT r.rank, r.branch_id, r.courier_count, r.total_packages, r.delivered, r.failed, r.on_time, r.total
+FROM ranked r
+ORDER BY r.rank
+LIMIT $3 OFFSET $4`
+
+// countBranchPerformanceSQL menghitung cabang dalam periode. Hanya dipakai saat halaman yang diminta kosong
+// di luar halaman pertama, karena total dari baris halaman tidak tersedia.
+const countBranchPerformanceSQL = `
+WITH` + branchAggCTE + `
+SELECT COUNT(*) FROM agg`
+
+const listBranchDailySQL = `
+SELECT m.branch_id, m.date,
+       SUM(m.total_packages)::int, SUM(m.delivered)::int, SUM(m.failed)::int, SUM(m.on_time)::int
+FROM courier_daily_metrics m
+WHERE m.branch_id = ANY($1::text[])
+  AND m.date BETWEEN $2::date AND $3::date
+GROUP BY m.branch_id, m.date
+ORDER BY m.branch_id, m.date`
+
+// ListBranchPerformance mengambil satu halaman ranking cabang dan tren hariannya dengan dua query,
+// tanpa N+1. BranchID di filter diabaikan. Hari tanpa data diisi nol di Go lewat domain.FillDaily.
+func (r *MetricRepository) ListBranchPerformance(ctx context.Context, f domain.MetricFilter) (domain.BranchPerformancePage, error) {
+	rows, err := r.pool.Query(ctx, listBranchPerformanceSQL, f.StartDate, f.EndDate, f.PageSize, f.Offset())
+	if err != nil {
+		return domain.BranchPerformancePage{}, fmt.Errorf("query peringkat cabang: %w", err)
+	}
+	page := domain.BranchPerformancePage{Items: []domain.BranchPerformance{}}
+	var p domain.BranchPerformance
+	scan := []any{&p.Rank, &p.BranchID, &p.CourierCount, &p.TotalPackages, &p.Delivered, &p.Failed, &p.OnTime, &page.Total}
+	if _, err := pgx.ForEachRow(rows, scan, func() error {
+		page.Items = append(page.Items, p)
+		return nil
+	}); err != nil {
+		return domain.BranchPerformancePage{}, fmt.Errorf("scan peringkat cabang: %w", err)
+	}
+	if len(page.Items) == 0 {
+		if f.Offset() > 0 {
+			if err := r.pool.QueryRow(ctx, countBranchPerformanceSQL, f.StartDate, f.EndDate).Scan(&page.Total); err != nil {
+				return domain.BranchPerformancePage{}, fmt.Errorf("hitung peringkat cabang: %w", err)
+			}
+		}
+		return page, nil
+	}
+
+	ids := make([]string, len(page.Items))
+	for i, it := range page.Items {
+		ids[i] = it.BranchID
+	}
+	dailyRows, err := r.pool.Query(ctx, listBranchDailySQL, ids, f.StartDate, f.EndDate)
+	if err != nil {
+		return domain.BranchPerformancePage{}, fmt.Errorf("query tren harian cabang: %w", err)
+	}
+	byBranch := make(map[string][]domain.DailyCount, len(ids))
+	var branchID string
+	var d domain.DailyCount
+	dailyScan := []any{&branchID, &d.Date, &d.TotalPackages, &d.Delivered, &d.Failed, &d.OnTime}
+	if _, err := pgx.ForEachRow(dailyRows, dailyScan, func() error {
+		byBranch[branchID] = append(byBranch[branchID], d)
+		return nil
+	}); err != nil {
+		return domain.BranchPerformancePage{}, fmt.Errorf("scan tren harian cabang: %w", err)
+	}
+	for i := range page.Items {
+		page.Items[i].Daily = domain.FillDaily(byBranch[page.Items[i].BranchID], f.StartDate, f.EndDate)
+	}
+	return page, nil
+}
+
 const aggregateDailySQL = `
 INSERT INTO courier_daily_metrics (courier_id, branch_id, date, total_packages, delivered, failed, on_time, updated_at)
 SELECT courier_id,

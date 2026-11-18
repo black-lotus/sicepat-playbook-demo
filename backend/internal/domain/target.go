@@ -95,6 +95,40 @@ func CompareTarget(actual, target float64) TargetStatus {
 	return TargetBelow
 }
 
+// BranchTargetResult adalah status capaian satu cabang terhadap target periodenya.
+type BranchTargetResult struct {
+	Target            PeriodTarget
+	SuccessRateStatus TargetStatus
+	SLARateStatus     TargetStatus
+	DeliveredStatus   TargetStatus
+}
+
+// EvaluateTarget membandingkan capaian cabang dengan target periode, memakai nilai mentah.
+// Mengembalikan nil bila t nil. Volume membandingkan Delivered dengan t.DeliveredPackages.
+func EvaluateTarget(p BranchPerformance, t *PeriodTarget) *BranchTargetResult {
+	if t == nil {
+		return nil
+	}
+	return &BranchTargetResult{
+		Target:            *t,
+		SuccessRateStatus: CompareTarget(p.SuccessRate(), t.SuccessRate),
+		SLARateStatus:     CompareTarget(p.SLARate(), t.SLARate),
+		DeliveredStatus:   CompareTarget(float64(p.Delivered), float64(t.DeliveredPackages)),
+	}
+}
+
+// BranchPerformanceWithTarget adalah performa cabang beserta evaluasi targetnya (nil bila tanpa target).
+type BranchPerformanceWithTarget struct {
+	BranchPerformance
+	Target *BranchTargetResult
+}
+
+// BranchPerformanceResultPage adalah satu halaman ranking cabang dengan target.
+type BranchPerformanceResultPage struct {
+	Items []BranchPerformanceWithTarget
+	Total int
+}
+
 // wibCivilDate mengembalikan tanggal sipil WIB dari t sebagai 00:00 UTC.
 func wibCivilDate(t time.Time) time.Time {
 	w := t.In(WIB)

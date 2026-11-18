@@ -46,19 +46,23 @@ func run() error {
 	redisClient := goredis.NewClient(&goredis.Options{Addr: cfg.RedisAddr})
 	defer redisClient.Close()
 
+	metricRepo := postgres.NewMetricRepository(pool)
+	targetRepo := postgres.NewTargetRepository(pool)
 	metricService := service.NewMetricService(
-		postgres.NewMetricRepository(pool),
+		metricRepo,
 		redis.NewMetricCache(redisClient),
 		cfg.CacheTTL,
 		logger,
 	)
-	targetService := service.NewTargetService(postgres.NewTargetRepository(pool))
+	targetService := service.NewTargetService(targetRepo)
 	failedService := service.NewFailedDeliveryService(postgres.NewFailedRepository(pool))
+	branchPerformanceService := service.NewBranchPerformanceService(metricRepo, targetRepo)
 	router := httpapi.NewRouter(httpapi.Handlers{
 		CourierMetrics:     httpapi.NewCourierMetricHandler(metricService, logger),
 		CourierPerformance: httpapi.NewCourierPerformanceHandler(metricService, targetService, logger),
 		KPITargets:         httpapi.NewKPITargetHandler(targetService, logger),
 		FailedDeliveries:   httpapi.NewFailedDeliveryHandler(failedService, logger),
+		BranchPerformance:  httpapi.NewBranchPerformanceHandler(branchPerformanceService, logger),
 	}, logger)
 
 	server := &http.Server{
