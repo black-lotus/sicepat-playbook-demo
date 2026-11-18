@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
-import { toCourierPerformance } from '../../api/courier-performance';
-import { courierPerformanceDTOs } from '../../test/fixtures';
+import { toCourierPerformance } from '../api/courier-performance';
+import { courierPerformanceDTOs } from '../test/fixtures';
 import { DailyStrip } from './DailyStrip';
 
 function courierByName(name: string) {

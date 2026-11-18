@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 
-import type { DailyCount } from '../../api/types';
-import { formatNumber } from '../../lib/format-number';
+import type { DailyCount } from '../api/types';
+import { formatNumber } from '../lib/format-number';
 
 interface DailyStripProps {
   daily: DailyCount[];

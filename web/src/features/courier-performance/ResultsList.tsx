@@ -4,7 +4,7 @@ import type { CourierPerformance } from '../../api/types';
 import { formatNumber } from '../../lib/format-number';
 import { formatPercent } from '../../lib/format-percent';
 import { Avatar } from './Avatar';
-import { DailyStrip } from './DailyStrip';
+import { DailyStrip } from '../../components/DailyStrip';
 import { useFinishLine } from './use-finish-line';
 
 interface ResultsListProps {
