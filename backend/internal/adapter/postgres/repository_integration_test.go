@@ -284,7 +284,7 @@ func openTestPool(t *testing.T) *pgxpool.Pool {
 	pool, err := postgres.NewPool(ctx, url)
 	require.NoError(t, err)
 	t.Cleanup(pool.Close)
-	_, err = pool.Exec(ctx, "TRUNCATE delivery_events, courier_daily_metrics, couriers")
+	_, err = pool.Exec(ctx, "TRUNCATE delivery_events, courier_daily_metrics, couriers, branch_kpi_targets")
 	require.NoError(t, err)
 	return pool
 }

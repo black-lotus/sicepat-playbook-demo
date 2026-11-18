@@ -50,6 +50,8 @@ func writeDomainError(w http.ResponseWriter, r *http.Request, logger *slog.Logge
 	switch {
 	case errors.Is(err, domain.ErrInvalidFilter):
 		writeError(w, http.StatusBadRequest, "invalid_filter", err.Error())
+	case errors.Is(err, domain.ErrTargetNotFound):
+		writeError(w, http.StatusNotFound, "target_not_found", err.Error())
 	default:
 		logger.ErrorContext(r.Context(), "request gagal", slog.String("path", r.URL.Path), slog.Any("error", err))
 		writeError(w, http.StatusInternalServerError, "internal_error", "terjadi kesalahan pada server")

@@ -52,11 +52,12 @@ func run() error {
 		cfg.CacheTTL,
 		logger,
 	)
-	router := httpapi.NewRouter(
-		httpapi.NewCourierMetricHandler(metricService, logger),
-		httpapi.NewCourierPerformanceHandler(metricService, logger),
-		logger,
-	)
+	targetService := service.NewTargetService(postgres.NewTargetRepository(pool))
+	router := httpapi.NewRouter(httpapi.Handlers{
+		CourierMetrics:     httpapi.NewCourierMetricHandler(metricService, logger),
+		CourierPerformance: httpapi.NewCourierPerformanceHandler(metricService, logger),
+		KPITargets:         httpapi.NewKPITargetHandler(targetService, logger),
+	}, logger)
 
 	server := &http.Server{
 		Addr:              cfg.HTTPAddr,

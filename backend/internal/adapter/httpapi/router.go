@@ -6,14 +6,28 @@ import (
 	"time"
 )
 
+// Handlers mengumpulkan handler yang dipasang di router. Handler yang nil tidak dipasang.
+type Handlers struct {
+	CourierMetrics     *CourierMetricHandler
+	CourierPerformance *CourierPerformanceHandler
+	KPITargets         *KPITargetHandler
+}
+
 // NewRouter menyusun semua route API beserta middleware.
-func NewRouter(courierMetrics *CourierMetricHandler, courierPerformance *CourierPerformanceHandler, logger *slog.Logger) http.Handler {
+func NewRouter(h Handlers, logger *slog.Logger) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	})
-	mux.HandleFunc("GET /api/v1/courier-metrics", courierMetrics.List)
-	mux.HandleFunc("GET /api/v1/courier-performance", courierPerformance.List)
+	if h.CourierMetrics != nil {
+		mux.HandleFunc("GET /api/v1/courier-metrics", h.CourierMetrics.List)
+	}
+	if h.CourierPerformance != nil {
+		mux.HandleFunc("GET /api/v1/courier-performance", h.CourierPerformance.List)
+	}
+	if h.KPITargets != nil {
+		mux.HandleFunc("GET /api/v1/branch-kpi-targets", h.KPITargets.Get)
+	}
 
 	return recoverer(logger, requestLogger(logger, mux))
 }

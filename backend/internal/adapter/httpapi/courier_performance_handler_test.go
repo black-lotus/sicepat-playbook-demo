@@ -36,11 +36,10 @@ func (f *fakePerformanceLister) ListCourierPerformance(_ context.Context, filter
 
 func newPerformanceServer(lister *fakePerformanceLister) http.Handler {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	return httpapi.NewRouter(
-		httpapi.NewCourierMetricHandler(&fakeLister{}, logger),
-		httpapi.NewCourierPerformanceHandler(lister, logger),
-		logger,
-	)
+	return httpapi.NewRouter(httpapi.Handlers{
+		CourierMetrics:     httpapi.NewCourierMetricHandler(&fakeLister{}, logger),
+		CourierPerformance: httpapi.NewCourierPerformanceHandler(lister, logger),
+	}, logger)
 }
 
 func TestCourierPerformanceHandler_List(t *testing.T) {

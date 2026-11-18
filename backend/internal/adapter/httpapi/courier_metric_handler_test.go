@@ -38,11 +38,10 @@ func (f *fakeLister) ListCourierMetrics(_ context.Context, filter domain.MetricF
 
 func newServer(lister *fakeLister) http.Handler {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	return httpapi.NewRouter(
-		httpapi.NewCourierMetricHandler(lister, logger),
-		httpapi.NewCourierPerformanceHandler(&fakePerformanceLister{}, logger),
-		logger,
-	)
+	return httpapi.NewRouter(httpapi.Handlers{
+		CourierMetrics:     httpapi.NewCourierMetricHandler(lister, logger),
+		CourierPerformance: httpapi.NewCourierPerformanceHandler(&fakePerformanceLister{}, logger),
+	}, logger)
 }
 
 func TestCourierMetricHandler_List(t *testing.T) {
