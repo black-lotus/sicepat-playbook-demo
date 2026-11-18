@@ -93,21 +93,67 @@ Standar cakupan minimal:
 - Setiap halaman diuji untuk state loading, error, data kosong, dan data terisi.
 
 ## Backend
-<!-- TODO: diisi oleh tim backend -->
 
 ### Arsitektur singkat
 Bahasa dan versi:
+- Go, dengan versi yang tertulis di `backend/go.mod`.
+
 Modul utama dan alurnya:
+- Arsitektur hexagonal (ports and adapters) di `backend/`:
+  - `cmd/` berisi entrypoint per binary (`api`, `worker`, `consumer`).
+  - `internal/domain/` berisi entity dan aturan bisnis (misalnya `Courier`, `Delivery`, `PerformanceMetric`), tanpa dependensi ke infrastruktur.
+  - `internal/port/` berisi interface untuk repository, publisher, dan cache.
+  - `internal/service/` berisi use case, misalnya menghitung skor performa atau merangkum KPI harian.
+  - `internal/adapter/` berisi implementasi port: `http` (handler REST), `postgres`, `redis`, `kafka`.
+- Alur data:
+  1. Event status paket dan aktivitas kurir masuk lewat Kafka.
+  2. Consumer menyimpannya ke PostgreSQL.
+  3. Worker menghitung agregat KPI secara berkala, lalu menyimpan hasilnya di PostgreSQL dan cache Redis.
+  4. API menyajikan data KPI ke frontend dashboard.
+
 Dependensi penting:
+- PostgreSQL (`pgx`), Redis (`go-redis`), Kafka, OpenTelemetry untuk tracing, dan logging terstruktur (`log/slog`).
+
+### Konvensi API
+- REST dengan JSON, diberi prefix versi (`/api/v1/...`). Path memakai kebab-case dan kata benda jamak (`/api/v1/couriers/{id}/metrics`).
+- Field JSON memakai snake_case (`awb_number`, `success_rate`).
+- Response sukses berbentuk `{"data": ..., "meta": ...}`. `meta` berisi info pagination (`page`, `page_size`, `total`).
+- Response error berbentuk `{"error": {"code": "...", "message": "..."}}` dengan status HTTP yang sesuai (400, 404, 422, 500). Pesan error internal tidak dikirim ke client.
+- Filter periode memakai `start_date` dan `end_date` dengan format ISO 8601. Semua waktu disimpan dalam UTC; konversi zona waktu dilakukan di frontend.
+- Angka KPI dihitung di backend, karena frontend hanya memformat.
+- Perubahan kontrak API (endpoint, bentuk request atau response) harus disepakati dengan tim frontend dan didokumentasikan di spesifikasi OpenAPI (`backend/api/openapi.yaml`).
 
 ### Konvensi kode
 Gaya penamaan:
+- Nama package memakai huruf kecil, satu kata, tanpa underscore (`courier`, `metric`).
+- Nama yang diekspor memakai PascalCase, yang tidak diekspor memakai camelCase. Akronim ditulis kapital penuh (`AWB`, `ID`, `HTTP`).
+- Interface diberi nama sesuai perilakunya (`CourierRepository`, `MetricPublisher`), tanpa prefix `I`.
+- Nama file memakai snake_case (`courier_repository.go`). File test memakai akhiran `_test.go`.
+
 Struktur folder:
+- Ikuti struktur hexagonal di atas. `internal/domain` tidak boleh meng-import `internal/adapter`.
+- Konfigurasi dibaca dari environment variable di `internal/config`.
+- Migrasi database disimpan di `backend/migrations/`.
+
 Pola yang dihindari:
+- `panic` di kode aplikasi. Selalu kembalikan `error` dan bungkus dengan konteks (`fmt.Errorf("hitung skor kurir: %w", err)`).
+- Variabel global yang bisa diubah dan `init()` yang punya efek samping. Gunakan dependency injection lewat konstruktor.
+- Mengabaikan `context.Context`. Setiap fungsi yang melakukan I/O menerima `ctx` sebagai parameter pertama.
+- Query N+1 saat menghitung metrik per kurir. Gunakan query agregat atau batch.
+- Endpoint list tanpa pagination atau tanpa batas periode.
+- Me-log data pribadi kurir dan penerima (nomor HP, NIK, alamat) dalam bentuk mentah.
 
 ### Test
-Framework dan cara menjalankannya:
+Framework dan cara menjalankannya (dari folder `backend/`):
+- Memakai `testing` bawaan Go dengan pola table-driven, ditambah `testify` untuk assertion dan mock dari `mockery`.
+- Unit test dijalankan dengan `go test ./...`, dan race detector dengan `go test -race ./...`.
+- Integration test (PostgreSQL, Redis, Kafka) diberi build tag `integration` dan dijalankan dengan `go test -tags=integration ./...`.
+- Handler HTTP diuji dengan `net/http/httptest`, termasuk bentuk response sukses dan error.
+- Lint dijalankan dengan `golangci-lint run` sebelum push.
+
 Standar cakupan minimal:
+- 80% untuk `internal/domain` dan `internal/service`.
+- 60% untuk seluruh backend. Cek dengan `go test -cover ./...`.
 
 ## Commit dan pull request
 Format pesan commit:
