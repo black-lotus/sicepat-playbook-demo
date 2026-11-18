@@ -6,16 +6,18 @@ interface QueryStateProps {
   isEmpty: boolean;
   emptyMessage: string;
   onRetry: () => void;
+  loadingFallback?: ReactNode;
   children: ReactNode;
 }
 
 /** Menampilkan state loading, error, dan data kosong secara seragam di semua halaman. */
-export function QueryState({ isPending, error, isEmpty, emptyMessage, onRetry, children }: QueryStateProps) {
+export function QueryState({ isPending, error, isEmpty, emptyMessage, onRetry, loadingFallback, children }: QueryStateProps) {
   if (isPending) {
     return (
-      <p className="state" role="status">
-        Memuat data…
-      </p>
+      <div className="state" role="status">
+        <p>Memuat data…</p>
+        {loadingFallback}
+      </div>
     );
   }
   if (error) {
