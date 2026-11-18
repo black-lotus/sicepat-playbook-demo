@@ -5,6 +5,7 @@ import { formatDate } from '../../lib/date';
 import { formatGap } from '../../lib/format-gap';
 import { formatNumber } from '../../lib/format-number';
 import { formatPercent } from '../../lib/format-percent';
+import { LaneChart } from './LaneChart';
 import { useBackdropClose } from './use-backdrop-close';
 import { useDialogFocus } from './use-dialog-focus';
 
@@ -54,6 +55,12 @@ function PanelContent({ item, onClose }: { item: CourierPerformance; onClose: ()
           <div><dt>Tepat SLA</dt><dd>{formatPercent(item.slaRate)}</dd></div>
           <div><dt>Selisih</dt><dd>{item.rank === 1 ? 'Pemimpin' : formatGap(item.successRateGap)}</dd></div>
         </dl>
+
+        <LaneChart daily={item.daily} />
+        <p className="detail-legend">
+          <span className="legend-delivered">Terkirim</span>
+          <span className="legend-on-time">Tepat SLA</span>
+        </p>
 
         <div className="table-wrap">
           <table className="data-table">
