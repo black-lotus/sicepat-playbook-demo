@@ -68,15 +68,25 @@ func (f MetricFilter) WithDefaults() MetricFilter {
 	return f
 }
 
+// validatePeriod memastikan periode wajib diisi, urut, dan tidak lebih dari MaxPeriodDays hari.
+func validatePeriod(start, end time.Time) error {
+	switch {
+	case start.IsZero() || end.IsZero():
+		return fmt.Errorf("%w: start_date dan end_date wajib diisi", ErrInvalidFilter)
+	case end.Before(start):
+		return fmt.Errorf("%w: end_date tidak boleh sebelum start_date", ErrInvalidFilter)
+	case end.Sub(start) > (MaxPeriodDays-1)*24*time.Hour:
+		return fmt.Errorf("%w: periode maksimal %d hari", ErrInvalidFilter, MaxPeriodDays)
+	}
+	return nil
+}
+
 // Validate memastikan filter punya periode yang wajar dan pagination yang terbatas.
 func (f MetricFilter) Validate() error {
+	if err := validatePeriod(f.StartDate, f.EndDate); err != nil {
+		return err
+	}
 	switch {
-	case f.StartDate.IsZero() || f.EndDate.IsZero():
-		return fmt.Errorf("%w: start_date dan end_date wajib diisi", ErrInvalidFilter)
-	case f.EndDate.Before(f.StartDate):
-		return fmt.Errorf("%w: end_date tidak boleh sebelum start_date", ErrInvalidFilter)
-	case f.EndDate.Sub(f.StartDate) > (MaxPeriodDays-1)*24*time.Hour:
-		return fmt.Errorf("%w: periode maksimal %d hari", ErrInvalidFilter, MaxPeriodDays)
 	case f.Page < 1:
 		return fmt.Errorf("%w: page minimal 1", ErrInvalidFilter)
 	case f.PageSize < 1 || f.PageSize > MaxPageSize:

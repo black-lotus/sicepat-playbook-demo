@@ -1,13 +1,15 @@
 import { useRef } from 'react';
 
 import type { CourierPerformance } from '../../api/types';
+import { DonutChart } from '../../components/DonutChart';
+import type { DonutSegment } from '../../components/DonutChart';
 import { formatDate } from '../../lib/date';
 import { formatGap } from '../../lib/format-gap';
 import { formatNumber } from '../../lib/format-number';
 import { formatPercent } from '../../lib/format-percent';
 import { Avatar } from './Avatar';
 import { BarChart } from './BarChart';
-import { DonutChart } from './DonutChart';
+import { compositionShares } from './chart-math';
 import { useBackdropClose } from './use-backdrop-close';
 import { useDialogFocus } from './use-dialog-focus';
 
@@ -19,6 +21,15 @@ interface CourierDetailPanelProps {
 export function CourierDetailPanel({ item, onClose }: CourierDetailPanelProps) {
   if (!item) return null;
   return <PanelContent key={item.courierID} item={item} onClose={onClose} />;
+}
+
+const compositionPatterns = { 'on-time': 'solid', late: 'diagonal', failed: 'dots' } as const;
+
+function compositionSegments(item: CourierPerformance): DonutSegment[] {
+  return compositionShares({ delivered: item.delivered, onTime: item.onTime, failed: item.failed }).map((segment) => ({
+    ...segment,
+    pattern: compositionPatterns[segment.key],
+  }));
 }
 
 function PanelContent({ item, onClose }: { item: CourierPerformance; onClose: () => void }) {
@@ -69,7 +80,7 @@ function PanelContent({ item, onClose }: { item: CourierPerformance; onClose: ()
         <section className="detail-card" aria-labelledby={`${titleID}-donut`}>
           <h3 id={`${titleID}-donut`}>Komposisi paket</h3>
           <p className="detail-note">Persen dari total paket di periode ini.</p>
-          <DonutChart total={item.totalPackages} delivered={item.delivered} onTime={item.onTime} failed={item.failed} />
+          <DonutChart total={item.totalPackages} label="Total paket" segments={compositionSegments(item)} />
         </section>
 
         <details className="detail-daily">

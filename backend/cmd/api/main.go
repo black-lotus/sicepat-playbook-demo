@@ -53,10 +53,12 @@ func run() error {
 		logger,
 	)
 	targetService := service.NewTargetService(postgres.NewTargetRepository(pool))
+	failedService := service.NewFailedDeliveryService(postgres.NewFailedRepository(pool))
 	router := httpapi.NewRouter(httpapi.Handlers{
 		CourierMetrics:     httpapi.NewCourierMetricHandler(metricService, logger),
 		CourierPerformance: httpapi.NewCourierPerformanceHandler(metricService, targetService, logger),
 		KPITargets:         httpapi.NewKPITargetHandler(targetService, logger),
+		FailedDeliveries:   httpapi.NewFailedDeliveryHandler(failedService, logger),
 	}, logger)
 
 	server := &http.Server{

@@ -1,0 +1,18 @@
+.donut { display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
+.donut-chart { flex: none; width: 156px; height: 156px; }
+.donut-track { stroke: var(--color-lane-soft); }
+.donut-total { fill: var(--color-ink); font-size: 26px; font-weight: 800; font-family: var(--font-ui); }
+.donut-total-label { fill: var(--color-ink-muted); font-size: 10px; font-family: var(--font-ui); }
+.donut-late-bg { fill: rgb(246 189 91 / 0.18); }
+.donut-late-fg { fill: var(--color-late); }
+.donut-failed-bg { fill: rgb(170 178 208 / 0.16); }
+.donut-failed-fg { fill: var(--color-failed); }
+.donut-legend { flex: 1 1 160px; display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; font-size: var(--text-sm); }
+.donut-legend li { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: var(--space-2); }
+.legend-count { color: var(--color-ink-muted); font-size: var(--text-xs); }
+.legend-percent { min-width: 5ch; text-align: right; font-weight: 700; }
+.legend-mark { display: inline-block; width: 12px; height: 12px; }
+.legend-mark-solid { border-radius: 50%; background: var(--gradient-accent); }
+.legend-mark-diagonal { border-radius: 3px; background: repeating-linear-gradient(135deg, var(--color-late) 0 2px, rgb(246 189 91 / 0.2) 2px 4px); }
+.legend-mark-dots { transform: rotate(45deg) scale(0.85); border: 2px solid var(--color-failed); background: none; }
+
