@@ -28,6 +28,48 @@
 4. Event tanpa `due_at` dan tanpa `assigned_at`: tidak pernah tepat SLA (perilaku boilerplate) dan tidak boleh panic. Dikunci di B1 (`TestDeliveryEvent_WithDefaultDueAt`).
 5. Layar 390px dengan 31 hari dan 40 kurir: tidak boleh scroll horizontal halaman. Data uji `JKT02` dari seed (B3), diperiksa lewat screenshot di F5.
 
+## Rencana test per kriteria selesai
+Setiap acceptance criteria di spec punya minimal satu test otomatis yang gagal bila perilakunya rusak. Lokasi:
+- BE unit di `backend/internal/**/*_test.go`.
+- BE integration (build tag `integration`, butuh Postgres) di `backend/internal/adapter/postgres/repository_integration_test.go`, disingkat "integ".
+- FE di `web/src/**/*.test.ts(x)`; nama FE ditulis sebagai judul `it(...)`.
+
+Status:
+- **ada**: test sudah ada di branch fitur.
+- **tambah**: test belum ada dan wajib ditulis sebelum PR task terkait dibuka.
+
+| AC | Yang dibuktikan | Test | Status |
+|---|---|---|---|
+| AC1 | Respons `{data, meta}`, angka sesuai rumus dan tabel Data contoh | BE integ `TestListCourierPerformance_JKT01`; BE `TestCourierPerformanceHandler_List`; BE `TestCourierPerformance_Rates`; FE `memetakan respons ke camelCase termasuk daily` | ada |
+| AC2 | Rate 0 tanpa NaN saat `total_packages` atau `delivered` 0 | BE `TestCourierPerformance_Rates`; FE `menandai hari tanpa paket sebagai kosong tanpa NaN` | ada |
+| AC3 | Batas hari WIB, dibuktikan dari level fungsi sampai repository | BE `TestDayStartWIB`, `TestMetricService_AggregateDaily`, `TestAggregate_UsesWIBDays`; BE integ `TestAggregateDaily_WIBBoundary` | ada |
+| AC3 | Empat waktu persis dari spec (1 Nov 05:00, 7 Nov 23:30, 31 Okt 23:59, 8 Nov 00:00 WIB), dari event sampai respons ranking | BE integ: tes AC3 end-to-end (event, `AggregateDaily`, `ListCourierPerformance`) | tambah |
+| AC4 | 400 `invalid_query` untuk format salah, 400 `invalid_filter` untuk periode tidak valid, pesan dari backend | BE `TestCourierPerformanceHandler_List`, `TestCourierPerformanceHandler_ParsesFilter`, `TestMetricService_ListCourierPerformance`; FE `melempar ApiError dengan code dan message dari backend untuk 400 invalid_filter`, `menampilkan state error dan bisa mencoba lagi` | ada |
+| AC5 | Tanpa data menghasilkan `data: []` | BE `TestCourierPerformanceHandler_List` (kasus kosong); BE integ `TestListCourierPerformance_BranchFilter`; FE `menampilkan state data kosong` | ada |
+| AC6 | Cut-off SLA 16:00 WIB dan `due_at` dari `assigned_at` | BE `TestSLADeadline`, `TestDeliveryEvent_WithDefaultDueAt`, `TestDeliveryEvent_IsOnTime`, `TestDeliveryConsumer_handle` | ada |
+| AC7 | `rank` dan `success_rate_gap` benar di halaman 2, dan tie-break | BE integ `TestListCourierPerformance_SecondPage`, `TestListCourierPerformance_TieBreakByCourierID` | ada |
+| AC7 | `meta.total` tetap benar walau halaman melewati jumlah data | BE integ: JKT01 page 3 page_size 2 menghasilkan 0 item dengan total 4 | tambah |
+| AC7 | FE: klik Berikutnya mengirim `page=2`, podium hilang, rank global tampil; ganti cabang kembali ke `page=1` | FE: alur pagination nyata di `CourierPerformancePage.test.tsx`, menggantikan test yang memalsukan `meta.page` | tambah |
+| AC8 | `daily` satu entri per hari, hari kosong 0, jumlahnya sama dengan total | BE `TestFillDaily`; BE integ `TestListCourierPerformance_JKT01`; FE `merender satu sel per hari dengan label ringkasan` | ada |
+| AC8 | Kurir pindah cabang: `branch_id` dari tanggal terakhir, filter cabang hanya menghitung hari di cabang itu | BE integ: kurir pindah cabang di dalam periode | tambah |
+| AC9 | Filter default 7 hari terakhir, cabang opsional, data diambil otomatis saat filter berubah | FE `mencakup hari ini dan 6 hari sebelumnya`, `mengubah cabang mengirim branch_id baru dan kembali ke halaman 1`, `mengubah periode mengirim tanggal baru` | ada |
+| AC9 | Mengosongkan input tanggal tidak membuat halaman crash | FE: `formatDateRange` dengan tanggal kosong, dan test mobile yang mengosongkan input Dari | tambah |
+| AC10 | Podium rank 1 sampai 3, kolom tabel, format `90,0%`, `−4,3 pp`, `Pemimpin` | FE `menampilkan podium dan tabel hasil dengan angka dari API`, `kartu podium punya nama aksesibel tanpa strip harian dan tanpa div di dalam tombol`, `halaman 2 tidak menampilkan podium dan mempertahankan rank global`; FE `formatGap` (`it.each`) | ada |
+| AC10 | Gap sangat kecil tidak tampil sebagai `−0,0 pp` | FE: kasus `formatGap(0.0004)` | tambah |
+| AC11 | State loading, error dengan Coba lagi, dan kosong | FE `menampilkan state loading`, `menampilkan state error dan bisa mencoba lagi`, `menampilkan state data kosong` | ada |
+| AC11 | Skeleton ada di dalam `role="status"`; data lama saat filter berubah ditandai `aria-busy` | FE: test skeleton dan test `isPlaceholderData` | tambah |
+| AC12 | Panel detail terbuka dari tabel, podium, dan daftar mobile; tutup dengan Tutup atau Esc; fokus kembali ke pemicu | FE `membuka dialog dari tabel dengan tabel harian dan grafik`, `membuka dialog dari kartu podium`, `menutup dengan Esc dan mengembalikan fokus ke pemicu`, `menutup lewat tombol Tutup`, `membuka panel detail dari daftar` | ada |
+| AC12 | Tab terkunci di dalam dialog dengan beberapa elemen fokus; backdrop tidak menutup saat drag-select; scroll halaman terkunci | FE: test kunci Tab di `FilterSheet`, test pointerdown/click backdrop, test `overflow` body | tambah |
+| AC13 | Di layar sempit, filter jadi sheet dan tabel jadi daftar peringkat | FE `menampilkan ringkasan filter yang membuka sheet berisi input Cabang`, `menampilkan hasil sebagai daftar peringkat tanpa tabel` | ada |
+| AC13 | Tidak ada scroll horizontal halaman di 390px untuk JKT01 (7 hari) dan JKT02 (31 hari, 40 kurir) | Cek browser di QA F5 Step 6: buka halaman di 390px dengan backend dan seed lokal, pastikan `document.documentElement.scrollWidth <= window.innerWidth` untuk kedua cabang, lalu simpan screenshot | tambah |
+| AC14 | Peringkat bawah netral; telat dibedakan bentuk, bukan hanya warna | FE `peringkat bawah netral tanpa penanda negatif`, `menggambar bagian telat hanya bila ada paket terkirim yang telat` | ada |
+| AC14 | Strip 31 hari di tabel cukup lebar sehingga pola telat terbaca | FE: `DailyStrip` size `sm` dengan 31 hari memasang `--days`; dicek visual di screenshot `dense-desktop.png` | tambah |
+
+Aturan pemakaian:
+- Baris berstatus **tambah** menjadi syarat selesai untuk task terkait.
+- Saat review PR, setiap AC yang disentuh PR itu harus menunjuk ke test di tabel ini, dan test tersebut harus gagal bila perubahannya dicabut.
+- AC13 satu-satunya kriteria yang butuh browser. Hasil `scrollWidth` dan screenshot dicantumkan di deskripsi PR F4 dan F5.
+
 ## Pembagian kerja dan model
 
 | Task | Sisi | Pemilik | Model | Effort | Bergantung ke |
