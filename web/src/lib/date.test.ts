@@ -1,4 +1,4 @@
-import { formatDate, formatDateRange, lastSevenDays, toISODate } from './date';
+import { formatDate, formatDateRange, formatDayMonth, lastSevenDays, toISODate } from './date';
 
 describe('toISODate', () => {
   it('menambahkan nol di depan bulan dan tanggal', () => {
@@ -43,5 +43,12 @@ describe('formatDateRange', () => {
     ['bukan-tanggal', '2026-11-18'],
   ])('mengembalikan "Pilih periode" bila tanggal tidak valid (%j, %j)', (start, end) => {
     expect(formatDateRange(start, end)).toBe('Pilih periode');
+  });
+});
+
+describe('formatDayMonth', () => {
+  it('menampilkan tanggal dan bulan pendek', () => {
+    expect(formatDayMonth('2026-11-12')).toBe('12 Nov');
+    expect(formatDayMonth('2026-10-01')).toBe('1 Okt');
   });
 });
