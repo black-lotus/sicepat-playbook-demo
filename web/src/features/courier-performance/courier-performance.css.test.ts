@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs';
 
 // Vitest mengosongkan hasil impor `?raw` untuk file CSS, jadi stylesheet dibaca langsung dari disk.
-const featureFiles = ['courier-performance.css', 'detail-panel.css'];
+const featureFiles = ['courier-performance.css', 'podium.css', 'results.css', 'detail-panel.css'];
 const featureCSS = featureFiles.map((file) => readFileSync(new URL(`./${file}`, import.meta.url), 'utf8')).join('\n');
 const appCSS = readFileSync(new URL('../../app/app.css', import.meta.url), 'utf8');
 
