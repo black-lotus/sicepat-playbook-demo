@@ -24,3 +24,28 @@ export function lastSevenDays(today: Date): { startDate: string; endDate: string
 export function formatDate(isoDate: string): string {
   return dateFormatter.format(new Date(`${isoDate}T00:00:00Z`));
 }
+
+const monthFormatter = new Intl.DateTimeFormat('id-ID', { month: 'short', timeZone: 'UTC' });
+
+function dayAndMonth(isoDate: string): { day: number; month: string } {
+  const date = new Date(`${isoDate}T00:00:00Z`);
+  return { day: date.getUTCDate(), month: monthFormatter.format(date) };
+}
+
+function isValidISODate(isoDate: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return false;
+  return !Number.isNaN(new Date(`${isoDate}T00:00:00Z`).getTime());
+}
+
+/**
+ * Rentang tanggal ringkas, misalnya "1 sampai 7 Nov" atau "28 Okt sampai 3 Nov".
+ * Bila salah satu tanggal kosong atau tidak valid (input date yang dikosongkan), mengembalikan "Pilih periode".
+ */
+export function formatDateRange(startDate: string, endDate: string): string {
+  if (!isValidISODate(startDate) || !isValidISODate(endDate)) return 'Pilih periode';
+  const start = dayAndMonth(startDate);
+  const end = dayAndMonth(endDate);
+  if (startDate === endDate) return `${end.day} ${end.month}`;
+  if (startDate.slice(0, 7) === endDate.slice(0, 7)) return `${start.day} sampai ${end.day} ${end.month}`;
+  return `${start.day} ${start.month} sampai ${end.day} ${end.month}`;
+}
