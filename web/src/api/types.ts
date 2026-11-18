@@ -50,3 +50,50 @@ export interface CourierMetricFilter {
   page: number;
   pageSize: number;
 }
+
+export interface DailyCountDTO {
+  date: string;
+  total_packages: number;
+  delivered: number;
+  failed: number;
+  on_time: number;
+}
+
+export interface CourierPerformanceDTO {
+  rank: number;
+  courier_id: string;
+  courier_name: string;
+  branch_id: string;
+  total_packages: number;
+  delivered: number;
+  failed: number;
+  on_time: number;
+  success_rate: number;
+  sla_rate: number;
+  success_rate_gap: number;
+  daily: DailyCountDTO[];
+}
+
+export interface DailyCount {
+  date: string;
+  totalPackages: number;
+  delivered: number;
+  failed: number;
+  onTime: number;
+}
+
+/** Ranking satu kurir untuk seluruh periode. Rasio dan selisih dihitung backend. */
+export interface CourierPerformance {
+  rank: number;
+  courierID: string;
+  courierName: string;
+  branchID: string;
+  totalPackages: number;
+  delivered: number;
+  failed: number;
+  onTime: number;
+  successRate: number;
+  slaRate: number;
+  successRateGap: number;
+  daily: DailyCount[];
+}
