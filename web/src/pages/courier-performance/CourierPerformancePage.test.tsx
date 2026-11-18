@@ -254,6 +254,21 @@ describe('CourierPerformancePage', () => {
     expect(row.outerHTML).not.toMatch(/neg|danger|error/i);
   });
 
+  it('memilih kurir dari tabel dan podium membuka dialog kurir itu', async () => {
+    server.use(http.get(endpoint, () => HttpResponse.json({ data: courierPerformanceDTOs, meta })));
+    const user = userEvent.setup();
+
+    renderPage();
+    await screen.findByRole('table', { name: 'Hasil lengkap' });
+    await user.click(within(rowOf('Budi Santoso')).getByRole('button', { name: 'Budi Santoso' }));
+
+    expect(screen.getByRole('dialog', { name: 'Budi Santoso' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Tutup' }));
+    await user.click(within(screen.getByRole('list', { name: 'Podium' })).getByRole('button', { name: /Dewi Lestari/ }));
+
+    expect(screen.getByRole('dialog', { name: 'Dewi Lestari' })).toBeInTheDocument();
+  });
 
   it('section halaman memakai kelas halaman agar CSS tidak bocor ke section lain', async () => {
     server.use(http.get(endpoint, () => HttpResponse.json({ data: courierPerformanceDTOs, meta })));
