@@ -47,6 +47,13 @@ Penyimpanan tetap UTC. Batas hari dan batas SLA adalah aturan bisnis, jadi dihit
 `CLAUDE.md` bagian Konvensi API perlu diubah: kalimat "konversi zona waktu dilakukan di frontend"
 diganti aturan di atas.
 
+**Transisi data lama.** Baris `courier_daily_metrics` yang dibuat sebelum aturan ini memakai batas hari
+UTC, dan worker hanya menghitung ulang hari ini dan kemarin. Agar riwayat tidak memakai dua aturan
+sekaligus, semua hari sebelum perubahan dihitung ulang sekali dari `delivery_events` (sumber kebenaran)
+dengan batas hari WIB. Penghitungan ulang satu hari selalu mengganti seluruh baris hari itu, sehingga
+baris basi yang tidak lagi punya event ikut hilang. Prosesnya boleh dijalankan berulang dengan hasil
+yang sama.
+
 ## Kontrak API
 
 Endpoint baru, didokumentasikan di `backend/api/openapi.yaml`. Endpoint `/api/v1/courier-metrics`

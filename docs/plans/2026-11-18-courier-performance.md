@@ -28,6 +28,14 @@
 4. Event tanpa `due_at` dan tanpa `assigned_at`: tidak pernah tepat SLA (perilaku boilerplate) dan tidak boleh panic. Dikunci di B1 (`TestDeliveryEvent_WithDefaultDueAt`).
 5. Layar 390px dengan 31 hari dan 40 kurir: tidak boleh scroll horizontal halaman. Data uji `JKT02` dari seed (B3), diperiksa lewat screenshot di F5.
 
+## Perubahan berisiko dan mitigasinya
+
+| Perubahan | Risiko | Alasan tetap dilakukan | Mitigasi |
+|---|---|---|---|
+| Batas hari laporan dan SLA pindah dari UTC ke WIB (B1) | Riwayat `courier_daily_metrics` jadi campuran aturan UTC dan WIB; baris lama yang tidak lagi punya event di jendela WIB tetap tersimpan | Hari laporan dan cut-off SLA adalah aturan bisnis dalam WIB; dengan UTC, event 00:00 sampai 06:59 WIB masuk hari sebelumnya. Disetujui tim BE. | B4: agregasi harian menghapus lalu mengisi ulang baris satu hari dalam satu transaksi, plus perintah backfill untuk menghitung ulang seluruh riwayat dari `delivery_events` |
+| Agregasi harian dikelompokkan per kurir saja (perbaikan review) | Cabang harian kurir diambil dari event terakhir hari itu | Tanpa perubahan ini, kurir yang pindah cabang di hari yang sama membuat upsert seluruh hari gagal | Integration test kurir dua cabang di hari yang sama |
+| Endpoint baru tanpa cache Redis | Beban query lebih tinggi daripada `/courier-metrics` | Menjaga scope kecil; dua query agregat per request tanpa N+1 | Dipantau setelah rilis; cache bisa ditambah di PR terpisah |
+
 ## Rencana test per kriteria selesai
 Setiap acceptance criteria di spec punya minimal satu test otomatis yang gagal bila perilakunya rusak. Lokasi:
 - BE unit di `backend/internal/**/*_test.go`.
@@ -65,6 +73,16 @@ Status:
 | AC14 | Peringkat bawah netral; telat dibedakan bentuk, bukan hanya warna | FE `peringkat bawah netral tanpa penanda negatif`, `menggambar bagian telat hanya bila ada paket terkirim yang telat` | ada |
 | AC14 | Strip 31 hari di tabel cukup lebar sehingga pola telat terbaca | FE: `DailyStrip` size `sm` dengan 31 hari memasang `--days`; dicek visual di screenshot `dense-desktop.png` | tambah |
 
+Kriteria transisi data lama (spec, bagian Transisi data lama; dikerjakan di B4, semuanya berstatus **tambah**):
+
+| Kriteria | Yang dibuktikan | Test |
+|---|---|---|
+| T1 | Agregasi satu hari mengganti seluruh baris hari itu, termasuk menghapus baris basi kurir yang tidak lagi punya event | BE integ `TestAggregateDaily_ReplacesWholeDay` |
+| T2 | Backfill menghitung ulang setiap hari dalam rentang dengan batas WIB, hasilnya sama dengan agregasi WIB baru | BE integ `TestBackfill_RecomputesHistoryInWIB` |
+| T3 | Backfill boleh diulang: menjalankan dua kali menghasilkan isi tabel yang sama | BE integ `TestBackfill_Idempotent` |
+| T4 | Rentang tidak valid ditolak; setiap hari dipanggil tepat sekali, inklusif, berurutan; berhenti saat context dibatalkan; error menyebut tanggalnya | BE unit `TestMetricService_Backfill` |
+| T5 | Flag perintah `backfill` divalidasi (format tanggal, `to` default kemarin WIB) | BE unit `TestParseBackfillFlags` |
+
 Aturan pemakaian:
 - Baris berstatus **tambah** menjadi syarat selesai untuk task terkait.
 - Saat review PR, setiap AC yang disentuh PR itu harus menunjuk ke test di tabel ini, dan test tersebut harus gagal bila perubahannya dicabut.
@@ -78,6 +96,7 @@ Aturan pemakaian:
 | B1. Aturan WIB: hari laporan dan cut-off SLA | BE | tim BE | sonnet | high | 0 |
 | B2. Endpoint ranking performa kurir | BE | tim BE | sonnet | high | B1 |
 | B3. Seed data contoh | BE | tim BE | sonnet | medium | B2 |
+| B4. Transisi data lama: agregasi ganti per hari dan backfill WIB | BE | tim BE | sonnet | high | B1 |
 | F1. Token desain, font, shell, `formatGap` | FE | tim FE | sonnet | medium | 0 |
 | F2. Tipe, client, dan hook `useCourierPerformance` | FE | tim FE | sonnet | medium | F1 |
 | F3. Halaman: podium, tabel hasil, state | FE | tim FE | sonnet | medium | F2 |
@@ -85,7 +104,7 @@ Aturan pemakaian:
 | F5. Gerak "garis finis", responsif, QA desain | FE | tim FE | sonnet | high | F4 |
 | I1. Integrasi lokal | bersama | BE + FE | haiku | low | B3, F5 |
 
-Saran PR: Task 0 sendiri; B1; B2+B3; F1; F2+F3; F4+F5. Tiap PR di bawah 400 baris di luar mock hasil generate dan lockfile.
+Saran PR: Task 0 sendiri; B1; B2+B3; B4; F1; F2+F3; F4+F5. B4 harus di-merge dan backfill-nya dijalankan sebelum dashboard dipakai untuk membaca riwayat sebelum perubahan WIB. Tiap PR di bawah 400 baris di luar mock hasil generate dan lockfile.
 
 ---
 
@@ -240,6 +259,56 @@ Expected: 4 item dengan angka sama dengan tabel Data contoh; untuk `JKT02` perio
 ```bash
 git add backend/seeds backend/Makefile docker-compose.yml
 git commit -m "chore(backend): seed data contoh untuk dashboard performa kurir"
+```
+
+---
+
+### Task B4: Transisi data lama: agregasi ganti per hari dan backfill WIB
+
+**Alasan:** B1 mengubah batas hari dari UTC ke WIB, tapi worker hanya menghitung ulang hari ini dan kemarin. Tanpa task ini, riwayat `courier_daily_metrics` memakai dua aturan sekaligus, dan baris lama yang tidak lagi punya event di jendela WIB tetap tersimpan. Lihat bagian Perubahan berisiko dan mitigasinya.
+
+**Files:**
+- Modify: `backend/internal/adapter/postgres/metric_repository.go`, `repository_integration_test.go`
+- Modify: `backend/internal/service/metric_service.go`, `metric_service_test.go`
+- Create: `backend/cmd/backfill/main.go`, `backend/cmd/backfill/main_test.go`
+- Modify: `backend/Makefile` (target `backfill`)
+
+**Interfaces:**
+- Consumes: `domain.DayStartWIB`, `MetricRepository.AggregateDaily` (B1).
+- Produces:
+  - `AggregateDaily` di repository: dalam satu transaksi, `DELETE FROM courier_daily_metrics WHERE date = $1`, lalu `INSERT ... SELECT` agregat hari itu. Signature tidak berubah, jadi worker otomatis ikut.
+  - `func (s *MetricService) Backfill(ctx context.Context, from, to time.Time) (int, error)`: `from` dan `to` tanggal WIB inklusif; error bila `from` setelah `to`; memanggil `AggregateDaily` sekali per hari secara berurutan; berhenti dan mengembalikan `ctx.Err()` bila context dibatalkan; error dibungkus dengan tanggalnya (`"backfill 2026-11-03: %w"`); mengembalikan jumlah hari yang selesai.
+  - `cmd/backfill` dengan flag `-from YYYY-MM-DD` (wajib) dan `-to YYYY-MM-DD` (default kemarin WIB), dipisah lewat `func parseBackfillFlags(args []string, now time.Time) (from, to time.Time, err error)` agar bisa diuji. Log satu baris per hari (tanggal dan durasi), tanpa data pribadi.
+  - `make backfill FROM=... TO=...`.
+
+- [ ] **Step 1: Tulis integration test** (Postgres uji, build tag `integration`):
+  - `TestAggregateDaily_ReplacesWholeDay`: sisipkan baris lama `courier_daily_metrics` untuk kurir X tanggal D tanpa event di hari WIB D, dan event kurir Y di hari D; setelah `AggregateDaily(D)` baris X hilang dan baris Y sesuai event.
+  - `TestBackfill_RecomputesHistoryInWIB`: event `2026-11-02T18:00:00Z` (3 Nov 01:00 WIB) dan `2026-11-03T10:00:00Z`; sisipkan baris lama hasil aturan UTC (event pertama tercatat di 2 Nov); setelah `Backfill(2 Nov, 3 Nov)` tanggal 2 Nov tidak berisi event itu dan 3 Nov berisi keduanya.
+  - `TestBackfill_Idempotent`: menjalankan `Backfill` dua kali pada rentang yang sama menghasilkan isi tabel identik.
+- [ ] **Step 2: Tulis unit test** `TestMetricService_Backfill` dengan mock repository (rentang terbalik ditolak tanpa memanggil repository; 1 sampai 3 Nov memanggil 3 kali berurutan dengan tanggal WIB; context dibatalkan setelah hari pertama berhenti; error hari kedua dibungkus dengan tanggalnya) dan `TestParseBackfillFlags` (tanpa `-from` error; format salah error; tanpa `-to` memakai kemarin WIB dari `now`).
+- [ ] **Step 3: Jalankan, pastikan gagal**
+
+Run: `cd backend && go test ./... && make test-integration DATABASE_URL=<db uji>`
+Expected: FAIL pada test baru.
+
+- [ ] **Step 4: Implementasi** sesuai Interfaces. Transaksi memakai `pool.BeginTx` dengan rollback bila insert gagal.
+- [ ] **Step 5: Jalankan semua test, coverage, lint**
+
+Run: `cd backend && make test-race && make test-integration DATABASE_URL=<db uji> && make cover && make lint`
+Expected: PASS, coverage sesuai standar, tanpa temuan lint baru.
+
+- [ ] **Step 6: Tulis runbook singkat** di deskripsi PR B4:
+  1. Merge dan deploy B1 dan B4 (worker sudah memakai WIB dan agregasi ganti per hari).
+  2. Cari tanggal event paling awal: `SELECT min(occurred_at) FROM delivery_events`, lalu ubah ke tanggal WIB.
+  3. Jalankan `make backfill FROM=<tanggal awal> TO=<kemarin>`.
+  4. Verifikasi beberapa hari: jumlah `total_packages` per hari di `courier_daily_metrics` sama dengan jumlah event `delivery_events` pada rentang `[hari 00:00 WIB, +1 hari)`.
+  5. Tunggu TTL cache Redis untuk `/courier-metrics` habis (lihat `CACHE_TTL`), atau hapus key `courier-metrics:*`.
+  6. Rollback: backfill hanya menghitung ulang dari `delivery_events`, jadi aman diulang; kalau kode WIB di-revert, jalankan backfill lagi dengan kode lama.
+- [ ] **Step 7: Commit dan buka PR B4**
+
+```bash
+git add backend/
+git commit -m "feat(backend): agregasi ganti per hari dan backfill riwayat dalam WIB"
 ```
 
 ---
