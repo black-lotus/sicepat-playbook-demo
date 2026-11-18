@@ -1,4 +1,4 @@
-import { formatDate, formatDateRange, formatDayMonth, lastSevenDays, toISODate } from './date';
+import { formatDate, formatDateRange, formatDayLabel, formatDayMonth, formatWeekdayDate, lastSevenDays, toISODate } from './date';
 
 describe('toISODate', () => {
   it('menambahkan nol di depan bulan dan tanggal', () => {
@@ -50,5 +50,19 @@ describe('formatDayMonth', () => {
   it('menampilkan tanggal dan bulan pendek', () => {
     expect(formatDayMonth('2026-11-12')).toBe('12 Nov');
     expect(formatDayMonth('2026-10-01')).toBe('1 Okt');
+  });
+});
+
+describe('formatWeekdayDate', () => {
+  it('memformat hari singkat, tanggal, dan bulan dalam bahasa Indonesia', () => {
+    expect(formatWeekdayDate('2026-11-12')).toBe('Kam, 12 Nov');
+    expect(formatWeekdayDate('2026-11-04')).toBe('Rab, 4 Nov');
+  });
+});
+
+describe('formatDayLabel', () => {
+  it('menulis hanya tanggal, atau tanggal dan bulan bila diminta', () => {
+    expect(formatDayLabel('2026-11-12')).toBe('12');
+    expect(formatDayLabel('2026-11-12', true)).toBe('12 Nov');
   });
 });
