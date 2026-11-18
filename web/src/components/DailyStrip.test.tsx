@@ -88,4 +88,22 @@ describe('DailyStrip', () => {
     expect(root?.style.getPropertyValue('--days')).toBe('7');
     expect(root).not.toHaveClass('daily-strip-dense');
   });
+  it('menggambar dua garis target dengan label teks bila targets diberikan', () => {
+    const { container } = render(<DailyStrip daily={budi.daily} size="md" targets={{ successRate: 0.9, slaRate: 0.85 }} />);
+
+    const success = container.querySelector<HTMLElement>('[data-target="success"]');
+    const sla = container.querySelector<HTMLElement>('[data-target="sla"]');
+    expect(success).toHaveTextContent('Target keberhasilan 90%');
+    expect(sla).toHaveTextContent('Target tepat SLA 85%');
+    expect(success?.style.bottom).toBe('90%');
+    expect(sla?.style.bottom).toBe('85%');
+    expect(success).toHaveAttribute('data-line', 'solid');
+    expect(sla).toHaveAttribute('data-line', 'dashed');
+  });
+
+  it('tidak menggambar garis target tanpa targets', () => {
+    const { container } = render(<DailyStrip daily={budi.daily} size="md" />);
+
+    expect(container.querySelector('[data-target]')).toBeNull();
+  });
 });

@@ -6,6 +6,7 @@ import { PinIcon } from '../../components/icons';
 import { Pagination } from '../../components/Pagination';
 import { QueryState } from '../../components/QueryState';
 import { formatDateRange } from '../../lib/date';
+import { targetLabels } from '../../lib/target-labels';
 import { useMediaQuery } from '../../lib/use-media-query';
 import '../../features/courier-performance/courier-performance.css';
 import '../../features/courier-performance/podium.css';
@@ -47,6 +48,10 @@ export function CourierPerformancePage({ today }: CourierPerformancePageProps) {
   const isNarrow = useMediaQuery(NARROW_QUERY);
 
   const selected = query.data?.items.find((item) => item.courierID === selectedCourierID) ?? null;
+
+  const branchTarget = query.data?.meta.branchTarget ?? null;
+  const targets = branchTarget ? { successRate: branchTarget.successRate, slaRate: branchTarget.slaRate } : undefined;
+  const labels = targets ? targetLabels(targets) : null;
 
   const branchInput = (
     <input
@@ -103,10 +108,16 @@ export function CourierPerformancePage({ today }: CourierPerformancePageProps) {
             {query.data.meta.page === 1 && <Podium items={query.data.items} onSelect={setSelectedCourierID} />}
             <div className="card results-card">
               <h2 className="card-title">Hasil lengkap</h2>
+              {labels && (
+                <div className="target-legend" role="group" aria-label="Target cabang">
+                  <span className="target-legend-item" data-line="solid">{labels.success}</span>
+                  <span className="target-legend-item" data-line="dashed">{labels.sla}</span>
+                </div>
+              )}
               {isNarrow ? (
-                <ResultsList items={query.data.items} onSelect={setSelectedCourierID} />
+                <ResultsList items={query.data.items} onSelect={setSelectedCourierID} targets={targets} />
               ) : (
-                <ResultsTable items={query.data.items} onSelect={setSelectedCourierID} />
+                <ResultsTable items={query.data.items} onSelect={setSelectedCourierID} targets={targets} />
               )}
               <Pagination
                 page={query.data.meta.page}
