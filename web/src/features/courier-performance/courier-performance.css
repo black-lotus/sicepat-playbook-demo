@@ -80,6 +80,28 @@
   .podium-figure { font-size: 2.75rem; }
 }
 
+/* Layar sempit: ringkasan filter, daftar peringkat, dan sheet dari bawah. */
+.filter-sheet { margin-bottom: var(--space-4); }
+.filter-summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); width: 100%; min-height: 44px; padding: var(--space-2) var(--space-3); text-align: left; font-family: var(--font-ui); }
+.filter-summary-label { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-ink-muted); }
+.filter-summary-value { font-weight: 600; }
+.filter-title { margin: 0; font-family: var(--font-figure); font-size: var(--text-xl); }
+.filters-sheet { flex-direction: column; align-items: stretch; margin-bottom: 0; }
+.filters-sheet .date-range { flex-wrap: wrap; }
+.filters-sheet input { min-height: 40px; }
+.filter-done { min-height: 44px; background: var(--color-lane); border-color: var(--color-lane); color: var(--color-surface); font-weight: 600; }
+
+.results-list { list-style: none; margin: 0; padding: 0; background: var(--color-surface); border: 1px solid var(--color-rule); border-radius: 8px; }
+.results-item { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); padding: var(--space-3); border-bottom: 1px solid var(--color-rule); }
+.results-item:last-child { border-bottom: 0; }
+.results-pos { font-family: var(--font-figure); font-size: var(--text-xl); font-weight: 700; text-align: center; font-variant-numeric: tabular-nums; }
+.results-body { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+.results-name { min-height: 24px; text-align: left; overflow-wrap: anywhere; }
+.results-body .daily-strip-sm { min-width: 0; width: 100%; }
+.results-rate { display: flex; flex-direction: column; align-items: flex-end; }
+.results-rate-figure { font-family: var(--font-figure); font-size: var(--text-lg); font-weight: 700; font-variant-numeric: tabular-nums; }
+.results-rate-label { font-size: var(--text-xs); color: var(--color-ink-muted); }
+
 @media (max-width: 640px) {
   .podium { padding-bottom: var(--space-2); scroll-padding-inline: var(--space-4); }
   .detail-panel { animation-name: panel-in-bottom; padding: var(--space-4); }
