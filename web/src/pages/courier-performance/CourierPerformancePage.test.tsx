@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { delay, http, HttpResponse } from 'msw';
 
 import { courierPerformanceDTOs } from '../../test/fixtures';
-import { renderWithQuery } from '../../test/render';
+import { renderWithProviders } from '../../test/render';
 import { server } from '../../test/server';
 import { CourierPerformancePage } from './CourierPerformancePage';
 
@@ -11,7 +11,7 @@ const today = new Date(2026, 10, 18);
 const endpoint = '/api/v1/courier-performance';
 
 function renderPage() {
-  return renderWithQuery(<CourierPerformancePage today={today} />);
+  return renderWithProviders(<CourierPerformancePage today={today} />);
 }
 
 const meta = { page: 1, page_size: 50, total: 4 };
@@ -277,5 +277,53 @@ describe('CourierPerformancePage', () => {
     await screen.findByRole('table', { name: 'Hasil lengkap' });
 
     expect(container.querySelector('section')).toHaveClass('courier-performance-page');
+  });
+
+  describe('target cabang', () => {
+    const target = { month: '2026-11', success_rate: 0.9, sla_rate: 0.85 };
+    const withStatus = courierPerformanceDTOs.map((dto, index) => ({
+      ...dto,
+      success_rate_status: index === 0 ? ('met' as const) : ('below' as const),
+    }));
+
+    it('menampilkan garis target dan penanda per kurir dengan ikon dan teks', async () => {
+      server.use(http.get(endpoint, () => HttpResponse.json({ data: withStatus, meta: { ...meta, branch_target: target } })));
+
+      renderPage();
+      await screen.findByRole('table', { name: 'Hasil lengkap' });
+
+      const legend = screen.getByRole('group', { name: 'Target cabang' });
+      expect(legend).toHaveTextContent('Target keberhasilan 90%');
+      expect(legend).toHaveTextContent('Target tepat SLA 85%');
+      const budi = rowOf('Budi Santoso');
+      expect(budi.querySelector('[data-target="success"]')).toHaveTextContent('Target keberhasilan 90%');
+      expect(budi.querySelector('[data-target="sla"]')).toHaveTextContent('Target tepat SLA 85%');
+      expect(within(budi).getByText('Di atas target')).toBeInTheDocument();
+      expect(budi.querySelector('.status-badge svg[aria-hidden="true"]')).not.toBeNull();
+      const dewi = rowOf('Dewi Lestari');
+      expect(within(dewi).getByText('Di bawah target')).toBeInTheDocument();
+      expect(dewi.querySelector('.status-badge svg[aria-hidden="true"]')).not.toBeNull();
+    });
+
+    it('tanpa branch_target (null) garis dan penanda tidak tampil', async () => {
+      server.use(http.get(endpoint, () => HttpResponse.json({ data: courierPerformanceDTOs, meta: { ...meta, branch_target: null } })));
+
+      const { container } = renderPage();
+      await screen.findByRole('table', { name: 'Hasil lengkap' });
+
+      expect(container.querySelector('[data-target]')).toBeNull();
+      expect(container.querySelector('.status-badge')).toBeNull();
+      expect(screen.queryByRole('group', { name: 'Target cabang' })).toBeNull();
+    });
+
+    it('tanpa field branch_target garis dan penanda tidak tampil', async () => {
+      server.use(http.get(endpoint, () => HttpResponse.json({ data: courierPerformanceDTOs, meta })));
+
+      const { container } = renderPage();
+      await screen.findByRole('table', { name: 'Hasil lengkap' });
+
+      expect(container.querySelector('[data-target]')).toBeNull();
+      expect(container.querySelector('.status-badge')).toBeNull();
+    });
   });
 });

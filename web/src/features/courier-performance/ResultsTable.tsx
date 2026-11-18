@@ -2,15 +2,19 @@ import { useRef } from 'react';
 
 import type { CourierPerformance } from '../../api/types';
 import { formatGap } from '../../lib/format-gap';
+import type { TargetRates } from '../../lib/target-labels';
 import { formatNumber } from '../../lib/format-number';
 import { formatPercent } from '../../lib/format-percent';
 import { Avatar } from './Avatar';
-import { DailyStrip } from './DailyStrip';
+import { DailyStrip } from '../../components/DailyStrip';
+import { StatusBadge } from '../../components/StatusBadge';
 import { useFinishLine } from './use-finish-line';
 
 interface ResultsTableProps {
   items: CourierPerformance[];
   onSelect: (courierID: string) => void;
+  /** Target cabang; bila ada, strip menggambar garis target. */
+  targets?: TargetRates;
 }
 
 const medal: Record<number, 'gold' | 'silver' | 'bronze'> = { 1: 'gold', 2: 'silver', 3: 'bronze' };
@@ -19,7 +23,7 @@ const medal: Record<number, 'gold' | 'silver' | 'bronze'> = { 1: 'gold', 2: 'sil
  * Tabel semantik yang ditata sebagai baris kartu (gaya riwayat transaksi). Role ditulis eksplisit karena
  * `display` bukan table membuat sebagian browser membuang semantik tabel.
  */
-export function ResultsTable({ items, onSelect }: ResultsTableProps) {
+export function ResultsTable({ items, onSelect, targets }: ResultsTableProps) {
   const bodyRef = useRef<HTMLTableSectionElement>(null);
   useFinishLine(bodyRef, items.map((item) => item.courierID));
 
@@ -57,7 +61,7 @@ export function ResultsTable({ items, onSelect }: ResultsTableProps) {
                     </span>
                   </span>
                 </td>
-                <td role="cell" className="daily-cell"><DailyStrip daily={item.daily} size="sm" /></td>
+                <td role="cell" className="daily-cell"><DailyStrip daily={item.daily} size="sm" targets={targets} /></td>
                 <td role="cell" className="num cell-hidden">{formatNumber(item.totalPackages)}</td>
                 <td role="cell" className="num cell-stat cell-delivered">
                   <span className="stat-label" aria-hidden="true">Terkirim</span>
@@ -67,7 +71,11 @@ export function ResultsTable({ items, onSelect }: ResultsTableProps) {
                   <span className="stat-label" aria-hidden="true">Gagal</span>
                   {formatNumber(item.failed)}
                 </td>
-                <td role="cell" className="num cell-rate">{formatPercent(item.successRate)}</td>
+                <td role="cell" className="num cell-rate">{formatPercent(item.successRate)}
+                  {item.successRateStatus && (
+                    <StatusBadge status={item.successRateStatus} label={item.successRateStatus === 'met' ? 'Di atas target' : 'Di bawah target'} />
+                  )}
+                </td>
                 <td role="cell" className="num cell-stat cell-sla">
                   <span className="stat-label" aria-hidden="true">Tepat SLA</span>
                   {formatPercent(item.slaRate)}

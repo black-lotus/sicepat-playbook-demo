@@ -43,6 +43,16 @@ func (p CourierPerformance) SuccessRateGap() float64 {
 	return max(p.LeaderSuccessRate-p.SuccessRate(), 0)
 }
 
+// SuccessRateStatus membandingkan success rate mentah kurir dengan target success rate cabang.
+// Mengembalikan nil bila t nil.
+func (p CourierPerformance) SuccessRateStatus(t *KPITarget) *TargetStatus {
+	if t == nil {
+		return nil
+	}
+	s := CompareTarget(p.SuccessRate(), t.SuccessRate)
+	return &s
+}
+
 // CourierPerformancePage adalah satu halaman ranking performa kurir.
 type CourierPerformancePage struct {
 	Items []CourierPerformance

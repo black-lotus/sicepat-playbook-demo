@@ -25,3 +25,11 @@ type MetricCache interface {
 	GetCourierMetrics(ctx context.Context, key string) (page domain.CourierMetricPage, found bool, err error)
 	SetCourierMetrics(ctx context.Context, key string, page domain.CourierMetricPage, ttl time.Duration) error
 }
+
+// TargetRepository membaca target KPI bulanan per cabang.
+type TargetRepository interface {
+	// ListTargets mengembalikan target cabang dalam branchIDs untuk bulan from sampai to (inklusif).
+	ListTargets(ctx context.Context, branchIDs []string, from, to time.Time) ([]domain.KPITarget, error)
+	// GetTarget mengembalikan target satu cabang pada satu bulan; found false bila tidak ada.
+	GetTarget(ctx context.Context, branchID string, month time.Time) (domain.KPITarget, bool, error)
+}

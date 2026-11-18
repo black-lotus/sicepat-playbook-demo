@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw';
 
 import { CourierPerformancePage } from '../../pages/courier-performance/CourierPerformancePage';
 import { courierPerformanceDTOs } from '../../test/fixtures';
-import { renderWithQuery } from '../../test/render';
+import { renderWithProviders } from '../../test/render';
 import { server } from '../../test/server';
 
 const today = new Date(2026, 10, 18);
@@ -13,7 +13,7 @@ const meta = { page: 1, page_size: 50, total: 4 };
 
 async function renderPage() {
   server.use(http.get(endpoint, () => HttpResponse.json({ data: courierPerformanceDTOs, meta })));
-  renderWithQuery(<CourierPerformancePage today={today} />);
+  renderWithProviders(<CourierPerformancePage today={today} />);
   return screen.findByRole('table', { name: 'Hasil lengkap' });
 }
 

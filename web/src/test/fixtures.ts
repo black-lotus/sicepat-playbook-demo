@@ -1,4 +1,9 @@
-import type { CourierMetricDTO, CourierPerformanceDTO } from '../api/types';
+import type {
+  BranchPerformanceDTO,
+  CourierMetricDTO,
+  CourierPerformanceDTO,
+  FailedSummaryDTO,
+} from '../api/types';
 
 export const courierMetricDTO: CourierMetricDTO = {
   courier_id: 'C001',
@@ -101,6 +106,71 @@ export const courierPerformanceDTOs: CourierPerformanceDTO[] = [
       { date: '2026-11-05', total_packages: 0, delivered: 0, failed: 0, on_time: 0 },
       { date: '2026-11-06', total_packages: 1, delivered: 0, failed: 1, on_time: 0 },
       { date: '2026-11-07', total_packages: 0, delivered: 0, failed: 0, on_time: 0 },
+    ],
+  },
+];
+
+/** Ringkasan gagal kirim sintetis, bentuk sama dengan contoh di spec. */
+export const failedSummaryDTO: FailedSummaryDTO = {
+  total_packages: 1200,
+  total_failed: 180,
+  failed_rate: 0.15,
+  previous_total_failed: 200,
+  failed_change_rate: -0.1,
+  reasons: [
+    { reason: 'Penerima tidak di tempat', count: 60, share: 0.3333333333 },
+    { reason: 'Tanpa alasan', count: 20, share: 0.1111111111 },
+  ],
+  top_couriers: [
+    {
+      rank: 1,
+      courier_id: 'C002',
+      courier_name: 'Sari Wulandari',
+      branch_id: 'JKT01',
+      total_packages: 40,
+      failed: 30,
+      failed_rate: 0.75,
+    },
+  ],
+};
+
+/** Dua cabang sintetis; cabang kedua tanpa target. */
+export const branchPerformanceDTOs: BranchPerformanceDTO[] = [
+  {
+    rank: 1,
+    branch_id: 'BDG02',
+    courier_count: 8,
+    total_packages: 1000,
+    delivered: 833,
+    failed: 167,
+    on_time: 700,
+    success_rate: 0.833,
+    sla_rate: 0.8403,
+    target: {
+      success_rate: 0.85,
+      sla_rate: 0.8,
+      delivered_packages: 900,
+      success_rate_status: 'below',
+      sla_rate_status: 'met',
+      delivered_status: 'below',
+    },
+    daily: [
+      { date: '2026-11-01', total_packages: 140, delivered: 120, failed: 20, on_time: 101 },
+    ],
+  },
+  {
+    rank: 2,
+    branch_id: 'JKT01',
+    courier_count: 4,
+    total_packages: 100,
+    delivered: 81,
+    failed: 19,
+    on_time: 75,
+    success_rate: 0.81,
+    sla_rate: 0.9259,
+    target: null,
+    daily: [
+      { date: '2026-11-01', total_packages: 14, delivered: 11, failed: 3, on_time: 10 },
     ],
   },
 ];

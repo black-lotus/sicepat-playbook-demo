@@ -11,7 +11,7 @@ import type {
   Paginated,
 } from './types';
 
-function toDailyCount(dto: DailyCountDTO): DailyCount {
+export function toDailyCount(dto: DailyCountDTO): DailyCount {
   return {
     date: dto.date,
     totalPackages: dto.total_packages,
@@ -34,6 +34,7 @@ export function toCourierPerformance(dto: CourierPerformanceDTO): CourierPerform
     successRate: dto.success_rate,
     slaRate: dto.sla_rate,
     successRateGap: dto.success_rate_gap,
+    successRateStatus: dto.success_rate_status ?? null,
     daily: dto.daily.map(toDailyCount),
   };
 }
@@ -55,7 +56,18 @@ export async function fetchCourierPerformance(
   );
   return {
     items: body.data.map(toCourierPerformance),
-    meta: { page: body.meta.page, pageSize: body.meta.page_size, total: body.meta.total },
+    meta: {
+      page: body.meta.page,
+      pageSize: body.meta.page_size,
+      total: body.meta.total,
+      branchTarget: body.meta.branch_target
+        ? {
+            month: body.meta.branch_target.month,
+            successRate: body.meta.branch_target.success_rate,
+            slaRate: body.meta.branch_target.sla_rate,
+          }
+        : null,
+    },
   };
 }
 

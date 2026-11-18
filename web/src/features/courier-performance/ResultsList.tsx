@@ -1,21 +1,30 @@
 import { useRef } from 'react';
 
 import type { CourierPerformance } from '../../api/types';
+import type { TargetRates } from '../../lib/target-labels';
 import { formatNumber } from '../../lib/format-number';
 import { formatPercent } from '../../lib/format-percent';
 import { Avatar } from './Avatar';
-import { DailyStrip } from './DailyStrip';
+import { DailyStrip } from '../../components/DailyStrip';
+import { StatusBadge } from '../../components/StatusBadge';
 import { useFinishLine } from './use-finish-line';
 
 interface ResultsListProps {
   items: CourierPerformance[];
   onSelect: (courierID: string) => void;
+  /** Target cabang; bila ada, strip menggambar garis target. */
+  targets?: TargetRates;
+}
+
+function RateStatus({ status }: { status: CourierPerformance['successRateStatus'] }) {
+  if (!status) return null;
+  return <StatusBadge status={status} label={status === 'met' ? 'Di atas target' : 'Di bawah target'} />;
 }
 
 const medal: Record<number, 'gold' | 'silver' | 'bronze'> = { 1: 'gold', 2: 'silver', 3: 'bronze' };
 
 /** Daftar peringkat untuk layar sempit, pengganti `ResultsTable`. */
-export function ResultsList({ items, onSelect }: ResultsListProps) {
+export function ResultsList({ items, onSelect, targets }: ResultsListProps) {
   const listRef = useRef<HTMLOListElement>(null);
   useFinishLine(listRef, items.map((item) => item.courierID));
 
@@ -31,7 +40,8 @@ export function ResultsList({ items, onSelect }: ResultsListProps) {
                 {name}
               </button>
               <span className="courier-sub">Pos {item.rank} · {formatNumber(item.totalPackages)} paket</span>
-              <DailyStrip daily={item.daily} size="sm" />
+              <DailyStrip daily={item.daily} size="sm" targets={targets} />
+              <RateStatus status={item.successRateStatus} />
             </div>
             <span className="results-rate">
               <span className="results-rate-figure">{formatPercent(item.successRate)}</span>

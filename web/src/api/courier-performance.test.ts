@@ -43,7 +43,7 @@ describe('fetchCourierPerformance', () => {
 
     const result = await fetchCourierPerformance(filter);
 
-    expect(result.meta).toEqual({ page: 1, pageSize: 50, total: 4 });
+    expect(result.meta).toEqual({ page: 1, pageSize: 50, total: 4, branchTarget: null });
     expect(result.items).toHaveLength(4);
     expect(result.items[1]).toEqual({
       rank: 2,
@@ -57,6 +57,7 @@ describe('fetchCourierPerformance', () => {
       successRate: 30 / 35,
       slaRate: 1,
       successRateGap: 0.9 - 30 / 35,
+      successRateStatus: null,
       daily: [
         { date: '2026-11-01', totalPackages: 5, delivered: 5, failed: 0, onTime: 5 },
         { date: '2026-11-02', totalPackages: 5, delivered: 4, failed: 1, onTime: 4 },
@@ -68,6 +69,27 @@ describe('fetchCourierPerformance', () => {
       ],
     });
     expect(courierPerformanceDTOs.map(toCourierPerformance)[0]?.daily).toHaveLength(7);
+  });
+
+  it('memetakan meta.branch_target dan success_rate_status', async () => {
+    server.use(
+      http.get('/api/v1/courier-performance', () =>
+        HttpResponse.json({
+          data: [{ ...courierPerformanceDTOs[0], success_rate_status: 'met' }],
+          meta: {
+            page: 1,
+            page_size: 50,
+            total: 1,
+            branch_target: { month: '2026-11', success_rate: 0.9, sla_rate: 0.85 },
+          },
+        }),
+      ),
+    );
+
+    const result = await fetchCourierPerformance(filter);
+
+    expect(result.meta.branchTarget).toEqual({ month: '2026-11', successRate: 0.9, slaRate: 0.85 });
+    expect(result.items[0]?.successRateStatus).toBe('met');
   });
 
   it('melempar ApiError dengan code dan message dari backend untuk 400 invalid_filter', async () => {
