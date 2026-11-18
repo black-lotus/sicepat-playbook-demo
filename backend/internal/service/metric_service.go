@@ -51,9 +51,9 @@ func (s *MetricService) ListCourierMetrics(ctx context.Context, filter domain.Me
 	return page, nil
 }
 
-// AggregateDaily menghitung ulang KPI harian semua kurir untuk tanggal tertentu (UTC).
+// AggregateDaily menghitung ulang KPI harian semua kurir untuk tanggal WIB dari date.
 func (s *MetricService) AggregateDaily(ctx context.Context, date time.Time) error {
-	day := date.UTC().Truncate(24 * time.Hour)
+	day := domain.DayStartWIB(date)
 	if err := s.repo.AggregateDaily(ctx, day); err != nil {
 		return fmt.Errorf("agregasi metrik harian %s: %w", day.Format(time.DateOnly), err)
 	}

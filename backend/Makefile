@@ -18,6 +18,8 @@ test:
 test-race:
 	go test -race ./...
 
+# PERINGATAN: test ini men-TRUNCATE tabel delivery_events, courier_daily_metrics, dan couriers.
+# Jangan arahkan DATABASE_URL ke database yang berisi data yang ingin disimpan.
 test-integration:
 	TEST_DATABASE_URL=$(DATABASE_URL) go test -tags=integration ./...
 

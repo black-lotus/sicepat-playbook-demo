@@ -103,9 +103,8 @@ func TestMetricService_ListCourierMetrics(t *testing.T) {
 }
 
 func TestMetricService_AggregateDaily(t *testing.T) {
-	jakarta := time.FixedZone("WIB", 7*60*60)
-	input := time.Date(2026, 11, 18, 5, 30, 0, 0, jakarta) // 2026-11-17 22:30 UTC
-	wantDay := time.Date(2026, 11, 17, 0, 0, 0, 0, time.UTC)
+	input := time.Date(2026, 11, 17, 17, 30, 0, 0, time.UTC) // 2026-11-18 00:30 WIB
+	wantDay := time.Date(2026, 11, 18, 0, 0, 0, 0, domain.WIB)
 	errDB := errors.New("db down")
 
 	tests := []struct {
