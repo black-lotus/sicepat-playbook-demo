@@ -33,3 +33,12 @@ type TargetRepository interface {
 	// GetTarget mengembalikan target satu cabang pada satu bulan; found false bila tidak ada.
 	GetTarget(ctx context.Context, branchID string, month time.Time) (domain.KPITarget, bool, error)
 }
+
+// FailedRepository membaca ringkasan gagal kirim dari delivery_events.
+type FailedRepository interface {
+	// FailedSummary menghitung total paket, total gagal, alasan, dan kurir gagal terbanyak untuk satu periode.
+	// PreviousTotalFailed tidak diisi. Reasons dan TopCouriers tidak pernah nil.
+	FailedSummary(ctx context.Context, f domain.FailedFilter) (domain.FailedSummary, error)
+	// CountFailed menghitung event gagal dalam periode dan filter cabang.
+	CountFailed(ctx context.Context, f domain.FailedFilter) (int, error)
+}
