@@ -68,7 +68,7 @@ func (r *MetricRepository) ListCourierMetrics(ctx context.Context, f domain.Metr
 const aggregateDailySQL = `
 INSERT INTO courier_daily_metrics (courier_id, branch_id, date, total_packages, delivered, failed, on_time, updated_at)
 SELECT courier_id,
-       branch_id,
+       (array_agg(branch_id ORDER BY occurred_at DESC, id DESC))[1],
        $1::date,
        COUNT(*),
        COUNT(*) FILTER (WHERE status = 'delivered'),
@@ -77,7 +77,7 @@ SELECT courier_id,
        now()
 FROM delivery_events
 WHERE occurred_at >= $2 AND occurred_at < $3
-GROUP BY courier_id, branch_id
+GROUP BY courier_id
 ON CONFLICT (courier_id, date) DO UPDATE SET
     branch_id      = EXCLUDED.branch_id,
     total_packages = EXCLUDED.total_packages,
@@ -86,10 +86,12 @@ ON CONFLICT (courier_id, date) DO UPDATE SET
     on_time        = EXCLUDED.on_time,
     updated_at     = EXCLUDED.updated_at`
 
-// AggregateDaily menghitung ulang KPI semua kurir untuk satu tanggal (UTC) dalam satu query agregat.
-// Batas hari dihitung di Go dalam UTC agar hasilnya tidak bergantung pada timezone sesi database.
+// AggregateDaily menghitung ulang KPI semua kurir untuk satu tanggal WIB dalam satu query agregat.
+// Event yang dihitung berada di [00:00 WIB, 00:00 WIB hari berikutnya), dan kolom date diisi tanggal WIB.
+// Satu baris per kurir per hari (PK courier_id, date); branch_id diambil dari event terakhir hari itu.
+// Batas hari dihitung di Go agar hasilnya tidak bergantung pada timezone sesi database.
 func (r *MetricRepository) AggregateDaily(ctx context.Context, date time.Time) error {
-	start := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.UTC)
+	start := domain.DayStartWIB(date)
 	end := start.AddDate(0, 0, 1)
 	if _, err := r.pool.Exec(ctx, aggregateDailySQL, start.Format(time.DateOnly), start, end); err != nil {
 		return fmt.Errorf("upsert courier_daily_metrics: %w", err)

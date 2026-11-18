@@ -49,6 +49,20 @@ func TestDeliveryConsumer_handle(t *testing.T) {
 				DueAt:      time.Date(2026, 11, 18, 10, 0, 0, 0, time.UTC),
 			},
 		},
+		{
+			name: "assigned_at tanpa due_at mengisi DueAt dari cut-off SLA",
+			value: `{"awb_number":"A1","courier_id":"C001","branch_id":"JKT01","status":"delivered",
+				"occurred_at":"2026-11-18T09:00:00+07:00","assigned_at":"2026-11-18T09:00:00+07:00"}`,
+			wantRecord: &domain.DeliveryEvent{
+				AWBNumber:  "A1",
+				CourierID:  "C001",
+				BranchID:   "JKT01",
+				Status:     domain.DeliveryStatusDelivered,
+				OccurredAt: time.Date(2026, 11, 18, 2, 0, 0, 0, time.UTC),
+				AssignedAt: time.Date(2026, 11, 18, 2, 0, 0, 0, time.UTC),
+				DueAt:      time.Date(2026, 11, 18, 16, 59, 59, 0, time.UTC),
+			},
+		},
 		{name: "bukan JSON dilewati", value: "bukan-json"},
 		{name: "event tidak valid dilewati", value: validJSON, recordErr: fmt.Errorf("%w: x", domain.ErrInvalidEvent)},
 		{name: "error simpan dikembalikan", value: validJSON, recordErr: errDB, wantErr: errDB},
@@ -70,4 +84,9 @@ func TestDeliveryConsumer_handle(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestNewDeliveryConsumer_Close(t *testing.T) {
+	c := NewDeliveryConsumer([]string{"localhost:9092"}, "delivery-events", "test-group", &fakeRecorder{}, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	assert.NoError(t, c.Close())
 }
