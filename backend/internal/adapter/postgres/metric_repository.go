@@ -65,6 +65,11 @@ func (r *MetricRepository) ListCourierMetrics(ctx context.Context, f domain.Metr
 	return page, nil
 }
 
+// ListCourierPerformance belum tersedia di repository; query ranking ditambahkan pada perubahan berikutnya.
+func (r *MetricRepository) ListCourierPerformance(_ context.Context, _ domain.MetricFilter) (domain.CourierPerformancePage, error) {
+	return domain.CourierPerformancePage{}, fmt.Errorf("ranking performa kurir belum tersedia di repository")
+}
+
 const aggregateDailySQL = `
 INSERT INTO courier_daily_metrics (courier_id, branch_id, date, total_packages, delivered, failed, on_time, updated_at)
 SELECT courier_id,

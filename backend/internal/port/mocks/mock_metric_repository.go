@@ -161,3 +161,69 @@ func (_c *MetricRepository_ListCourierMetrics_Call) RunAndReturn(run func(ctx co
 	_c.Call.Return(run)
 	return _c
 }
+
+// ListCourierPerformance provides a mock function for the type MetricRepository
+func (_mock *MetricRepository) ListCourierPerformance(ctx context.Context, filter domain.MetricFilter) (domain.CourierPerformancePage, error) {
+	ret := _mock.Called(ctx, filter)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListCourierPerformance")
+	}
+
+	var r0 domain.CourierPerformancePage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.MetricFilter) (domain.CourierPerformancePage, error)); ok {
+		return returnFunc(ctx, filter)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.MetricFilter) domain.CourierPerformancePage); ok {
+		r0 = returnFunc(ctx, filter)
+	} else {
+		r0 = ret.Get(0).(domain.CourierPerformancePage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, domain.MetricFilter) error); ok {
+		r1 = returnFunc(ctx, filter)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MetricRepository_ListCourierPerformance_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListCourierPerformance'
+type MetricRepository_ListCourierPerformance_Call struct {
+	*mock.Call
+}
+
+// ListCourierPerformance is a helper method to define mock.On call
+//   - ctx context.Context
+//   - filter domain.MetricFilter
+func (_e *MetricRepository_Expecter) ListCourierPerformance(ctx interface{}, filter interface{}) *MetricRepository_ListCourierPerformance_Call {
+	return &MetricRepository_ListCourierPerformance_Call{Call: _e.mock.On("ListCourierPerformance", ctx, filter)}
+}
+
+func (_c *MetricRepository_ListCourierPerformance_Call) Run(run func(ctx context.Context, filter domain.MetricFilter)) *MetricRepository_ListCourierPerformance_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 domain.MetricFilter
+		if args[1] != nil {
+			arg1 = args[1].(domain.MetricFilter)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MetricRepository_ListCourierPerformance_Call) Return(courierPerformancePage domain.CourierPerformancePage, err error) *MetricRepository_ListCourierPerformance_Call {
+	_c.Call.Return(courierPerformancePage, err)
+	return _c
+}
+
+func (_c *MetricRepository_ListCourierPerformance_Call) RunAndReturn(run func(ctx context.Context, filter domain.MetricFilter) (domain.CourierPerformancePage, error)) *MetricRepository_ListCourierPerformance_Call {
+	_c.Call.Return(run)
+	return _c
+}

@@ -129,3 +129,68 @@ func TestMetricService_AggregateDaily(t *testing.T) {
 		})
 	}
 }
+
+func TestMetricService_ListCourierPerformance(t *testing.T) {
+	valid := domain.MetricFilter{
+		StartDate: time.Date(2026, 11, 1, 0, 0, 0, 0, time.UTC),
+		EndDate:   time.Date(2026, 11, 7, 0, 0, 0, 0, time.UTC),
+	}
+	withDefaults := valid.WithDefaults()
+	page := domain.CourierPerformancePage{
+		Items: []domain.CourierPerformance{{Rank: 1, CourierID: "C001", TotalPackages: 10, Delivered: 9}},
+		Total: 1,
+	}
+	errDB := errors.New("db down")
+
+	tests := []struct {
+		name    string
+		filter  domain.MetricFilter
+		setup   func(repo *mocks.MetricRepository)
+		want    domain.CourierPerformancePage
+		wantErr error
+	}{
+		{
+			name:   "berhasil dengan default pagination",
+			filter: valid,
+			setup: func(repo *mocks.MetricRepository) {
+				repo.EXPECT().ListCourierPerformance(mock.Anything, withDefaults).Return(page, nil)
+			},
+			want: page,
+		},
+		{
+			name: "periode 32 hari ditolak tanpa memanggil repository",
+			filter: domain.MetricFilter{
+				StartDate: time.Date(2026, 11, 1, 0, 0, 0, 0, time.UTC),
+				EndDate:   time.Date(2026, 12, 2, 0, 0, 0, 0, time.UTC),
+			},
+			setup:   func(*mocks.MetricRepository) {},
+			wantErr: domain.ErrInvalidFilter,
+		},
+		{
+			name:   "repository error dibungkus dengan konteks",
+			filter: valid,
+			setup: func(repo *mocks.MetricRepository) {
+				repo.EXPECT().ListCourierPerformance(mock.Anything, withDefaults).Return(domain.CourierPerformancePage{}, errDB)
+			},
+			wantErr: errDB,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := mocks.NewMetricRepository(t)
+			tt.setup(repo)
+			svc := service.NewMetricService(repo, mocks.NewMetricCache(t), time.Minute, discardLogger)
+
+			got, err := svc.ListCourierPerformance(context.Background(), tt.filter)
+			if tt.wantErr != nil {
+				assert.ErrorIs(t, err, tt.wantErr)
+				if errors.Is(tt.wantErr, errDB) {
+					assert.ErrorContains(t, err, "ambil performa kurir")
+				}
+				return
+			}
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}

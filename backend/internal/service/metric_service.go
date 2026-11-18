@@ -51,6 +51,20 @@ func (s *MetricService) ListCourierMetrics(ctx context.Context, filter domain.Me
 	return page, nil
 }
 
+// ListCourierPerformance mengembalikan ranking performa kurir sesuai filter.
+// Endpoint ini belum memakai cache.
+func (s *MetricService) ListCourierPerformance(ctx context.Context, filter domain.MetricFilter) (domain.CourierPerformancePage, error) {
+	filter = filter.WithDefaults()
+	if err := filter.Validate(); err != nil {
+		return domain.CourierPerformancePage{}, err
+	}
+	page, err := s.repo.ListCourierPerformance(ctx, filter)
+	if err != nil {
+		return domain.CourierPerformancePage{}, fmt.Errorf("ambil performa kurir: %w", err)
+	}
+	return page, nil
+}
+
 // AggregateDaily menghitung ulang KPI harian semua kurir untuk tanggal WIB dari date.
 func (s *MetricService) AggregateDaily(ctx context.Context, date time.Time) error {
 	day := domain.DayStartWIB(date)
