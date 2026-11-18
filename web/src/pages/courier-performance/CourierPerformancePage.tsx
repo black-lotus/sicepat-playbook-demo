@@ -5,6 +5,7 @@ import { DateRangeFilter } from '../../components/DateRangeFilter';
 import { Pagination } from '../../components/Pagination';
 import { QueryState } from '../../components/QueryState';
 import '../../features/courier-performance/courier-performance.css';
+import { CourierDetailPanel } from '../../features/courier-performance/CourierDetailPanel';
 import { Podium } from '../../features/courier-performance/Podium';
 import { ResultsTable } from '../../features/courier-performance/ResultsTable';
 import { useCourierPerformanceFilter } from '../../features/courier-performance/use-courier-performance-filter';
@@ -31,7 +32,9 @@ function LoadingSkeleton() {
 export function CourierPerformancePage({ today }: CourierPerformancePageProps) {
   const { filter, setPeriod, setBranch, setPage } = useCourierPerformanceFilter(today);
   const query = useCourierPerformance(filter);
-  const [, setSelectedCourierID] = useState<string | null>(null);
+  const [selectedCourierID, setSelectedCourierID] = useState<string | null>(null);
+
+  const selected = query.data?.items.find((item) => item.courierID === selectedCourierID) ?? null;
 
   return (
     <section className="courier-performance-page">
@@ -70,6 +73,7 @@ export function CourierPerformancePage({ today }: CourierPerformancePageProps) {
           </div>
         )}
       </QueryState>
+      <CourierDetailPanel item={selected} onClose={() => setSelectedCourierID(null)} />
     </section>
   );
 }
