@@ -49,3 +49,9 @@ export function formatDateRange(startDate: string, endDate: string): string {
   if (startDate.slice(0, 7) === endDate.slice(0, 7)) return `${start.day} sampai ${end.day} ${end.month}`;
   return `${start.day} ${start.month} sampai ${end.day} ${end.month}`;
 }
+
+/** Tanggal pendek untuk sumbu grafik, misalnya "12 Nov". */
+export function formatDayMonth(isoDate: string): string {
+  const { day, month } = dayAndMonth(isoDate);
+  return `${day} ${month}`;
+}

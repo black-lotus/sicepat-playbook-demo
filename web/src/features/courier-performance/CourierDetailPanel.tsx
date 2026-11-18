@@ -5,7 +5,9 @@ import { formatDate } from '../../lib/date';
 import { formatGap } from '../../lib/format-gap';
 import { formatNumber } from '../../lib/format-number';
 import { formatPercent } from '../../lib/format-percent';
-import { LaneChart } from './LaneChart';
+import { Avatar } from './Avatar';
+import { BarChart } from './BarChart';
+import { DonutChart } from './DonutChart';
 import { useBackdropClose } from './use-backdrop-close';
 import { useDialogFocus } from './use-dialog-focus';
 
@@ -39,10 +41,13 @@ function PanelContent({ item, onClose }: { item: CourierPerformance; onClose: ()
         aria-labelledby={titleID}
       >
         <header className="detail-header">
-          <div>
-            <p className="detail-pos">Posisi {item.rank}</p>
-            <h2 id={titleID}>{name}</h2>
-            <p className="detail-branch">{item.branchID}</p>
+          <div className="detail-who">
+            <Avatar courierID={item.courierID} name={name} size="lg" />
+            <div>
+              <p className="detail-pos">Posisi {item.rank}</p>
+              <h2 id={titleID}>{name}</h2>
+              <p className="detail-branch">{item.branchID}</p>
+            </div>
           </div>
           <button ref={closeRef} type="button" onClick={onClose}>Tutup</button>
         </header>
@@ -56,37 +61,45 @@ function PanelContent({ item, onClose }: { item: CourierPerformance; onClose: ()
           <div><dt>Selisih</dt><dd>{item.rank === 1 ? 'Pemimpin' : formatGap(item.successRateGap)}</dd></div>
         </dl>
 
-        <LaneChart daily={item.daily} />
-        <p className="detail-legend">
-          <span className="legend-delivered">Terkirim</span>
-          <span className="legend-on-time">Tepat SLA</span>
-        </p>
+        <section className="detail-card" aria-labelledby={`${titleID}-bars`}>
+          <h3 id={`${titleID}-bars`}>Paket terkirim per hari</h3>
+          <BarChart daily={item.daily} />
+        </section>
 
-        <div className="table-wrap">
-          <table className="data-table">
-            <caption className="visually-hidden">Rincian harian {name}</caption>
-            <thead>
-              <tr>
-                <th scope="col">Tanggal</th>
-                <th scope="col" className="num">Total paket</th>
-                <th scope="col" className="num">Terkirim</th>
-                <th scope="col" className="num">Gagal</th>
-                <th scope="col" className="num">Tepat SLA</th>
-              </tr>
-            </thead>
-            <tbody>
-              {item.daily.map((day) => (
-                <tr key={day.date}>
-                  <td>{formatDate(day.date)}</td>
-                  <td className="num">{formatNumber(day.totalPackages)}</td>
-                  <td className="num">{formatNumber(day.delivered)}</td>
-                  <td className="num">{formatNumber(day.failed)}</td>
-                  <td className="num">{formatNumber(day.onTime)}</td>
+        <section className="detail-card" aria-labelledby={`${titleID}-donut`}>
+          <h3 id={`${titleID}-donut`}>Komposisi paket</h3>
+          <p className="detail-note">Persen dari total paket di periode ini.</p>
+          <DonutChart total={item.totalPackages} delivered={item.delivered} onTime={item.onTime} failed={item.failed} />
+        </section>
+
+        <details className="detail-daily">
+          <summary>Rincian harian</summary>
+          <div className="table-wrap">
+            <table className="data-table">
+              <caption className="visually-hidden">Rincian harian {name}</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Tanggal</th>
+                  <th scope="col" className="num">Total paket</th>
+                  <th scope="col" className="num">Terkirim</th>
+                  <th scope="col" className="num">Gagal</th>
+                  <th scope="col" className="num">Tepat SLA</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {item.daily.map((day) => (
+                  <tr key={day.date}>
+                    <td>{formatDate(day.date)}</td>
+                    <td className="num">{formatNumber(day.totalPackages)}</td>
+                    <td className="num">{formatNumber(day.delivered)}</td>
+                    <td className="num">{formatNumber(day.failed)}</td>
+                    <td className="num">{formatNumber(day.onTime)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
       </div>
     </div>
   );
