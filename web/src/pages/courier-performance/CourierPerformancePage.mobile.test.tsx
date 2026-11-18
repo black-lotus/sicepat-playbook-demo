@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 
 import { courierPerformanceDTOs } from '../../test/fixtures';
-import { renderWithQuery } from '../../test/render';
+import { renderWithProviders } from '../../test/render';
 import { server } from '../../test/server';
 import { CourierPerformancePage } from './CourierPerformancePage';
 
@@ -35,7 +35,7 @@ describe('CourierPerformancePage di layar sempit', () => {
 
   it('menampilkan ringkasan filter yang membuka sheet berisi input Cabang', async () => {
     const user = userEvent.setup();
-    renderWithQuery(<CourierPerformancePage today={today} />);
+    renderWithProviders(<CourierPerformancePage today={today} />);
     await screen.findByRole('list', { name: 'Hasil lengkap' });
 
     expect(screen.queryByLabelText('Cabang')).not.toBeInTheDocument();
@@ -57,7 +57,7 @@ describe('CourierPerformancePage di layar sempit', () => {
 
   it('ringkasan filter memuat cabang yang dipilih', async () => {
     const user = userEvent.setup();
-    renderWithQuery(<CourierPerformancePage today={today} />);
+    renderWithProviders(<CourierPerformancePage today={today} />);
     await screen.findByRole('list', { name: 'Hasil lengkap' });
 
     await user.click(screen.getByRole('button', { name: /Semua cabang/ }));
@@ -68,7 +68,7 @@ describe('CourierPerformancePage di layar sempit', () => {
   });
 
   it('menampilkan hasil sebagai daftar peringkat tanpa tabel', async () => {
-    renderWithQuery(<CourierPerformancePage today={today} />);
+    renderWithProviders(<CourierPerformancePage today={today} />);
 
     const list = await screen.findByRole('list', { name: 'Hasil lengkap' });
 
@@ -83,7 +83,7 @@ describe('CourierPerformancePage di layar sempit', () => {
 
   it('membuka panel detail dari daftar', async () => {
     const user = userEvent.setup();
-    renderWithQuery(<CourierPerformancePage today={today} />);
+    renderWithProviders(<CourierPerformancePage today={today} />);
     const list = await screen.findByRole('list', { name: 'Hasil lengkap' });
 
     await user.click(within(list).getByRole('button', { name: 'Dewi Lestari' }));
@@ -93,7 +93,7 @@ describe('CourierPerformancePage di layar sempit', () => {
 
   it('mengosongkan input Dari tidak membuat halaman crash dan ringkasan meminta periode', async () => {
     const user = userEvent.setup();
-    renderWithQuery(<CourierPerformancePage today={today} />);
+    renderWithProviders(<CourierPerformancePage today={today} />);
     await screen.findByRole('list', { name: 'Hasil lengkap' });
 
     await user.click(screen.getByRole('button', { name: /Semua cabang/ }));
@@ -106,7 +106,7 @@ describe('CourierPerformancePage di layar sempit', () => {
 
   it('Tab dari elemen terakhir sheet kembali ke yang pertama, Shift+Tab dari yang pertama ke yang terakhir', async () => {
     const user = userEvent.setup();
-    renderWithQuery(<CourierPerformancePage today={today} />);
+    renderWithProviders(<CourierPerformancePage today={today} />);
     await screen.findByRole('list', { name: 'Hasil lengkap' });
 
     await user.click(screen.getByRole('button', { name: /Semua cabang/ }));
@@ -128,7 +128,7 @@ describe('CourierPerformancePage di layar sempit', () => {
 
   it('klik backdrop menutup sheet hanya bila pointerdown dan click sama-sama di backdrop', async () => {
     const user = userEvent.setup();
-    renderWithQuery(<CourierPerformancePage today={today} />);
+    renderWithProviders(<CourierPerformancePage today={today} />);
     await screen.findByRole('list', { name: 'Hasil lengkap' });
     await user.click(screen.getByRole('button', { name: /Semua cabang/ }));
     const sheet = screen.getByRole('dialog', { name: 'Filter' });
@@ -145,7 +145,7 @@ describe('CourierPerformancePage di layar sempit', () => {
 
   it('mengunci scroll halaman selama sheet terbuka dan memulihkannya setelah ditutup', async () => {
     const user = userEvent.setup();
-    renderWithQuery(<CourierPerformancePage today={today} />);
+    renderWithProviders(<CourierPerformancePage today={today} />);
     await screen.findByRole('list', { name: 'Hasil lengkap' });
     expect(document.body.style.overflow).toBe('');
 

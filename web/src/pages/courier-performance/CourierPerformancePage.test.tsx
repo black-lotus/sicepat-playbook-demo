@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { delay, http, HttpResponse } from 'msw';
 
 import { courierPerformanceDTOs } from '../../test/fixtures';
-import { renderWithQuery } from '../../test/render';
+import { renderWithProviders } from '../../test/render';
 import { server } from '../../test/server';
 import { CourierPerformancePage } from './CourierPerformancePage';
 
@@ -11,7 +11,7 @@ const today = new Date(2026, 10, 18);
 const endpoint = '/api/v1/courier-performance';
 
 function renderPage() {
-  return renderWithQuery(<CourierPerformancePage today={today} />);
+  return renderWithProviders(<CourierPerformancePage today={today} />);
 }
 
 const meta = { page: 1, page_size: 50, total: 4 };
