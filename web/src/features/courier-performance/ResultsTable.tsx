@@ -2,6 +2,7 @@ import type { CourierPerformance } from '../../api/types';
 import { formatGap } from '../../lib/format-gap';
 import { formatNumber } from '../../lib/format-number';
 import { formatPercent } from '../../lib/format-percent';
+import { DailyStrip } from './DailyStrip';
 
 interface ResultsTableProps {
   items: CourierPerformance[];
@@ -17,6 +18,7 @@ export function ResultsTable({ items, onSelect }: ResultsTableProps) {
           <tr>
             <th scope="col" className="num">Pos</th>
             <th scope="col">Kurir</th>
+            <th scope="col">Harian</th>
             <th scope="col" className="num">Total paket</th>
             <th scope="col" className="num">Terkirim</th>
             <th scope="col" className="num">Gagal</th>
@@ -34,6 +36,7 @@ export function ResultsTable({ items, onSelect }: ResultsTableProps) {
                   {item.courierName || item.courierID}
                 </button>
               </td>
+              <td className="daily-cell"><DailyStrip daily={item.daily} size="sm" /></td>
               <td className="num">{formatNumber(item.totalPackages)}</td>
               <td className="num">{formatNumber(item.delivered)}</td>
               <td className="num">{formatNumber(item.failed)}</td>
