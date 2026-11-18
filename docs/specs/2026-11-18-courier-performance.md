@@ -1,30 +1,41 @@
-# Spec: Laporan performa kurir per cabang
+# Spec: Ranking performa kurir
 
 ## Tujuan
-Supervisor cabang bisa melihat performa setiap kurir di cabangnya untuk rentang tanggal tertentu:
-berapa paket yang ditugaskan, terkirim, gagal, dan seberapa banyak yang tepat SLA.
+Supervisor cabang bisa melihat ranking kurir untuk rentang tanggal tertentu: siapa yang terbaik
+(untuk diapresiasi), angka totalnya, dan tren hariannya.
+
+Spec ini mengikuti konvensi dan boilerplate yang sudah ada di `main` (lihat `CLAUDE.md`).
+Desain FE: `docs/design/2026-11-18-courier-performance.md`.
 
 ## Di luar scope
-- Penyimpanan PostgreSQL, Kafka, Redis, dan worker agregasi. BE memakai repository in-memory berisi data contoh.
-- Autentikasi, pagination, export, grafik.
+- Breakdown alasan gagal (sudah ada halaman Gagal Kirim terpisah).
+- Target KPI per cabang, autentikasi, export.
 - Daftar cabang dari API. FE memakai input teks untuk `branch_id`.
 
-## Definisi
-Satu `Delivery` adalah satu paket yang ditugaskan ke satu kurir.
+## Data yang dipakai
+Mengikuti boilerplate:
+- `delivery_events`: satu baris per percobaan pengiriman, status `delivered` atau `failed`,
+  dengan `occurred_at` dan `due_at` (batas SLA), disimpan dalam UTC.
+- `courier_daily_metrics`: agregat harian per kurir, diisi worker.
 
-| Field | Tipe | Keterangan |
-|---|---|---|
-| `AWB` | string | nomor resi |
-| `CourierID`, `CourierName` | string | kurir yang ditugaskan |
-| `BranchID` | string | cabang kurir |
-| `Status` | `DELIVERED`, `FAILED`, `ON_PROCESS` | status terakhir |
-| `AssignedAt` | waktu | kapan paket ditugaskan, dipakai untuk filter periode |
-| `DeliveredAt` | waktu, boleh kosong | terisi hanya bila `DELIVERED` |
+Rumus per kurir (sudah ada di `domain.CourierMetric`):
+- `total_packages` = jumlah event; `delivered`, `failed` = jumlah per status.
+- `on_time` = jumlah `delivered` dengan `occurred_at <= due_at`.
+- `success_rate` = `delivered / total_packages`, 0 bila `total_packages` 0.
+- `sla_rate` = `on_time / delivered`, 0 bila `delivered` 0.
+- Rate dikirim apa adanya (0..1), tanpa pembulatan. FE memformat.
 
-Batas SLA dihitung dari `AssignedAt` dengan cut-off pukul 16:00 WIB:
-- Ditugaskan sebelum 16:00 WIB pada hari D: batas SLA = hari D pukul 23:59:59 WIB.
-- Ditugaskan pukul 16:00 WIB atau lebih pada hari D: batas SLA = hari D+1 pukul 16:00:00 WIB.
-- Paket tepat SLA bila `DeliveredAt <= batas SLA`.
+## Aturan zona waktu (keputusan baru, berlaku untuk seluruh backend)
+Penyimpanan tetap UTC. Batas hari dan batas SLA adalah aturan bisnis, jadi dihitung backend dalam WIB
+(UTC+7, tanpa DST).
+
+- **Hari laporan:** event masuk ke tanggal `occurred_at` dalam WIB. Hari D = `[D 00:00 WIB, D+1 00:00 WIB)`.
+  Worker mengagregasi `courier_daily_metrics` per hari WIB. `start_date` dan `end_date` adalah tanggal WIB.
+- **Batas SLA (cut-off 16:00 WIB):** dihitung dari waktu paket ditugaskan.
+  - Ditugaskan sebelum 16:00 WIB pada hari D: batas = hari D 23:59:59 WIB.
+  - Ditugaskan pukul 16:00 WIB atau lebih: batas = hari D+1 16:00:00 WIB.
+  - Event Kafka mendapat field opsional `assigned_at`. Bila `due_at` kosong dan `assigned_at` ada,
+    consumer mengisi `due_at` dengan aturan ini. Bila `due_at` dikirim sumber, nilainya dipakai apa adanya.
 
 | Ditugaskan (WIB) | Batas SLA (WIB) |
 |---|---|
@@ -33,65 +44,84 @@ Batas SLA dihitung dari `AssignedAt` dengan cut-off pukul 16:00 WIB:
 | 7 Nov 16:00 | 8 Nov 16:00:00 |
 | 7 Nov 21:00 | 8 Nov 16:00:00 |
 
-Perhitungan per kurir, dari delivery yang `AssignedAt`-nya ada di dalam periode:
-- `assigned` = jumlah semua delivery (termasuk `ON_PROCESS`)
-- `delivered` = jumlah `DELIVERED`
-- `failed` = jumlah `FAILED`
-- `on_time` = jumlah `DELIVERED` yang tepat SLA
-- `success_rate` = `delivered / assigned`, 0 bila `assigned` = 0
-- `on_time_rate` = `on_time / delivered`, 0 bila `delivered` = 0
-- Kedua rate dibulatkan 4 angka desimal (0.916666 menjadi 0.9167)
-
-Periode laporan memakai hari kalender WIB (tidak terpengaruh cut-off SLA). `from` dan `to` inklusif:
-periode = `[from 00:00 WIB, to+1 hari 00:00 WIB)`. Paket yang ditugaskan 7 Nov 21:00 masuk periode
-7 Nov walaupun batas SLA-nya 8 Nov.
+`CLAUDE.md` bagian Konvensi API perlu diubah: kalimat "konversi zona waktu dilakukan di frontend"
+diganti aturan di atas.
 
 ## Kontrak API
 
-`GET /api/v1/courier-performance?branch_id=JKT01&from=2026-11-01&to=2026-11-07`
+Endpoint baru, didokumentasikan di `backend/api/openapi.yaml`. Endpoint `/api/v1/courier-metrics`
+yang sudah ada tidak berubah.
 
-Validasi, dicek berurutan:
-| Kondisi | Status | `error.code` |
+`GET /api/v1/courier-performance?start_date=2026-11-01&end_date=2026-11-07&branch_id=JKT01&page=1&page_size=50`
+
+| Parameter | Wajib | Keterangan |
 |---|---|---|
-| `branch_id` kosong | 400 | `MISSING_BRANCH_ID` |
-| `from` atau `to` kosong atau bukan format `YYYY-MM-DD` | 400 | `INVALID_DATE` |
-| `from` > `to`, atau periode lebih dari 31 hari (inklusif) | 400 | `INVALID_DATE_RANGE` |
+| `start_date`, `end_date` | ya | `YYYY-MM-DD`, tanggal WIB, inklusif, maksimal 31 hari |
+| `branch_id` | tidak | kosong berarti semua cabang |
+| `page` | tidak | default 1 |
+| `page_size` | tidak | default 20, maksimal 100 |
+
+Validasi memakai `MetricFilter` yang sudah ada: format salah menghasilkan 400 `invalid_query`,
+periode atau pagination tidak valid menghasilkan 400 `invalid_filter`, error lain 500 `internal_error`.
 
 Respons 200:
 ```json
 {
-  "branch_id": "JKT01",
-  "from": "2026-11-01",
-  "to": "2026-11-07",
-  "items": [
+  "data": [
     {
+      "rank": 1,
       "courier_id": "C001",
       "courier_name": "Budi Santoso",
-      "assigned": 40,
+      "branch_id": "JKT01",
+      "total_packages": 40,
       "delivered": 36,
-      "failed": 3,
+      "failed": 4,
       "on_time": 33,
       "success_rate": 0.9,
-      "on_time_rate": 0.9167
+      "sla_rate": 0.9166666666666666,
+      "success_rate_gap": 0,
+      "daily": [
+        { "date": "2026-11-01", "total_packages": 6, "delivered": 6, "failed": 0, "on_time": 5 }
+      ]
     }
-  ]
+  ],
+  "meta": { "page": 1, "page_size": 50, "total": 4 }
 }
 ```
-- `items` diurutkan `success_rate` menurun, lalu `courier_id` menaik.
-- Tidak ada data: `items` berisi `[]`, bukan `null`.
+- Urutan: `success_rate` menurun, lalu `courier_id` menaik. `rank` adalah posisi global (1 sampai
+  `meta.total`), stabil di semua halaman.
+- `success_rate_gap` = `success_rate` peringkat 1 dikurangi `success_rate` kurir ini (0 untuk peringkat 1),
+  dihitung backend karena peringkat 1 bisa ada di halaman lain.
+- `daily`: satu entri per tanggal WIB dari `start_date` sampai `end_date`, urut menaik, hari tanpa event
+  bernilai 0. Jumlah tiap field sama dengan totalnya. Contoh di atas dipotong.
+- Kurir yang tidak punya event di periode itu tidak muncul. Tidak ada data: `data` berisi `[]`.
 
-Respons 400:
-```json
-{ "error": { "code": "INVALID_DATE_RANGE", "message": "Periode maksimal 31 hari dan from tidak boleh setelah to." } }
-```
+## Data contoh
+Data sintetis dimasukkan lewat seed pengembangan (bukan migrasi). Screenshot dan demo yang memakainya diberi keterangan "data contoh".
+
+Cabang `JKT01`, 1 sampai 7 Nov 2026. Nilai `daily` ditulis `total/delivered/failed/on_time`:
+
+| Rank | Kurir | Total t/d/f/o | `success_rate` | `sla_rate` | `daily` 1 sampai 7 Nov |
+|---|---|---|---|---|---|
+| 1 | C001 Budi Santoso | 40/36/4/33 | 0.9 | 0.91667 | 6/6/0/5, 5/5/0/5, 6/5/1/5, 6/5/1/4, 5/5/0/5, 6/5/1/5, 6/5/1/4 |
+| 2 | C003 Dewi Lestari | 35/30/5/30 | 0.85714 | 1 | 5/5/0/5, 5/4/1/4, 5/4/1/4, 5/5/0/5, 5/4/1/4, 5/4/1/4, 5/4/1/4 |
+| 3 | C004 Agus Pratama | 21/15/6/12 | 0.71429 | 0.8 | 3/3/0/3, 3/2/1/2, 3/2/1/1, 3/2/1/2, 3/2/1/1, 3/2/1/2, 3/2/1/1 |
+| 4 | C002 Sari Wulandari | 4/0/4/0 | 0 | 0 | 1/0/1/0, 1/0/1/0, 0/0/0/0, 1/0/1/0, 0/0/0/0, 1/0/1/0, 0/0/0/0 |
+
+Cabang `JKT02`: 40 kurir, 1 sampai 31 Okt 2026, untuk uji tampilan padat. Cabang `BDG01`: tanpa data.
 
 ## Acceptance criteria
-- AC1: Request valid mengembalikan 200 dengan satu item per kurir di cabang itu, angka sesuai perhitungan di atas.
-- AC2: Kurir dengan `assigned` 0 atau `delivered` 0 mendapat rate 0, bukan error.
-- AC3: Untuk `from=2026-11-01&to=2026-11-07`, paket yang ditugaskan 2026-11-01 05:00 WIB dan 2026-11-07 23:30 WIB terhitung; paket 2026-10-31 23:59 WIB dan 2026-11-08 00:00 WIB tidak.
-- AC4: Setiap kondisi validasi mengembalikan 400 dengan `error.code` yang sesuai tabel.
-- AC5: Cabang tanpa data mengembalikan 200 dengan `items: []`.
-- AC6: Halaman `/courier-performance` punya input cabang, tanggal awal, tanggal akhir, dan tombol Tampilkan. Request baru dikirim saat tombol ditekan.
-- AC7: Halaman menampilkan tabel kolom: Kurir, Ditugaskan, Terkirim, Gagal, Success rate, Tepat SLA. Rate ditampilkan sebagai persen format Indonesia satu desimal (0.9167 menjadi `91,7%`).
-- AC8: Halaman menampilkan state loading, pesan error dari `error.message` API, dan pesan "Belum ada data untuk periode ini." saat `items` kosong.
-- AC9: `on_time` mengikuti cut-off 16:00 WIB sesuai tabel batas SLA. Paket ditugaskan 7 Nov 09:00 dan terkirim 8 Nov 00:00 WIB tidak tepat SLA; paket ditugaskan 7 Nov 16:00 dan terkirim 8 Nov 16:00 WIB tepat SLA.
+- AC1: Request valid mengembalikan 200 `{data, meta}` dengan satu item per kurir yang punya event, angka sesuai rumus.
+- AC2: Kurir dengan `total_packages` 0 di suatu hari atau `delivered` 0 mendapat rate 0, bukan error atau NaN.
+- AC3: Event `occurred_at` 2026-11-01 05:00 WIB dan 2026-11-07 23:30 WIB terhitung untuk periode 1 sampai 7 Nov; event 2026-10-31 23:59 WIB dan 2026-11-08 00:00 WIB tidak.
+- AC4: Parameter tidak valid menghasilkan 400 dengan `invalid_query` atau `invalid_filter`, pesan dari backend.
+- AC5: Tidak ada data menghasilkan 200 dengan `data: []`.
+- AC6: Batas SLA mengikuti cut-off 16:00 WIB: ditugaskan 7 Nov 09:00 dan terkirim 8 Nov 00:00 WIB tidak tepat SLA; ditugaskan 7 Nov 16:00 dan terkirim 8 Nov 16:00 WIB tepat SLA.
+- AC7: `rank` dan `success_rate_gap` benar di halaman 2 (peringkat 1 ada di halaman 1).
+- AC8: `daily` berisi tepat satu entri per hari dalam periode, jumlahnya sama dengan total.
+- AC9: Halaman `/courier-performance` memakai filter yang sudah ada (periode default 7 hari terakhir, cabang opsional) dan mengambil data otomatis saat filter berubah.
+- AC10: Halaman menampilkan **podium** (rank 1 sampai 3, hanya di halaman 1) dan **tabel hasil** dengan kolom Pos, Kurir, Harian, Total paket, Terkirim, Gagal, Keberhasilan, Tepat SLA, Selisih. Rate memakai `formatPercent` yang sudah ada (`90,0%`); Selisih dalam poin persen (`−4,3 pp`), rank 1 menampilkan `Pemimpin`.
+- AC11: State loading, error (pesan dari API, tombol Coba lagi), dan kosong tetap ada.
+- AC12: Klik baris atau kartu podium membuka panel detail kurir berisi tren harian. Panel ditutup dengan tombol Tutup atau Esc.
+- AC13: Di lebar 390px halaman tidak scroll horizontal; podium menjadi carousel geser, tabel menjadi daftar peringkat.
+- AC14: Peringkat bawah tampil netral (tanpa merah, tanpa label negatif). Tepat SLA dan telat dibedakan bentuk, bukan hanya warna.
