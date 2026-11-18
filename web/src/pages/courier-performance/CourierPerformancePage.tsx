@@ -2,11 +2,13 @@ import { useState } from 'react';
 
 import { useCourierPerformance } from '../../api/courier-performance';
 import { DateRangeFilter } from '../../components/DateRangeFilter';
+import { PinIcon } from '../../components/icons';
 import { Pagination } from '../../components/Pagination';
 import { QueryState } from '../../components/QueryState';
 import { formatDateRange } from '../../lib/date';
 import { useMediaQuery } from '../../lib/use-media-query';
 import '../../features/courier-performance/courier-performance.css';
+import '../../features/courier-performance/detail-panel.css';
 import { CourierDetailPanel } from '../../features/courier-performance/CourierDetailPanel';
 import { FilterSheet } from '../../features/courier-performance/FilterSheet';
 import { Podium } from '../../features/courier-performance/Podium';
@@ -44,30 +46,46 @@ export function CourierPerformancePage({ today }: CourierPerformancePageProps) {
 
   const selected = query.data?.items.find((item) => item.courierID === selectedCourierID) ?? null;
 
-  const filterControls = (
+  const branchInput = (
+    <input
+      type="text"
+      placeholder="Semua cabang"
+      value={filter.branchID}
+      onChange={(e) => setBranch(e.target.value.trim().toUpperCase())}
+    />
+  );
+
+  // Desktop: kontrol bergaya pil dengan label tersembunyi. Layar sempit: kontrol standar di dalam FilterSheet.
+  const pillControls = (
+    <>
+      <DateRangeFilter variant="pill" startDate={filter.startDate} endDate={filter.endDate} onChange={setPeriod} />
+      <label className="pill-field">
+        <span className="visually-hidden">Cabang</span>
+        <PinIcon />
+        {branchInput}
+      </label>
+    </>
+  );
+  const sheetControls = (
     <>
       <DateRangeFilter startDate={filter.startDate} endDate={filter.endDate} onChange={setPeriod} />
       <label>
         Cabang
-        <input
-          type="text"
-          placeholder="Semua cabang"
-          value={filter.branchID}
-          onChange={(e) => setBranch(e.target.value.trim().toUpperCase())}
-        />
+        {branchInput}
       </label>
     </>
   );
 
   return (
     <section className="courier-performance-page">
-      <h1>Performa Kurir</h1>
-      {isNarrow ? (
+      <header className="page-header">
+        <h1>Performa Kurir</h1>
+        {!isNarrow && <div className="filters filters-pill">{pillControls}</div>}
+      </header>
+      {isNarrow && (
         <FilterSheet summary={`${filter.branchID || 'Semua cabang'} · ${formatDateRange(filter.startDate, filter.endDate)}`}>
-          {filterControls}
+          {sheetControls}
         </FilterSheet>
-      ) : (
-        <div className="filters">{filterControls}</div>
       )}
 
       <QueryState
