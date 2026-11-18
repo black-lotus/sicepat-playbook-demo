@@ -12,8 +12,10 @@ describe('stylesheet performa kurir', () => {
     expect(featureCSS).toContain('var(--color-scrim)');
   });
 
-  it('--color-scrim didefinisikan untuk tema terang dan gelap', () => {
-    expect(appCSS.match(/--color-scrim:/g)).toHaveLength(2);
+  it('tema gelap tunggal: --color-scrim didefinisikan sekali dan tidak bergantung pada prefers-color-scheme', () => {
+    expect(appCSS.match(/--color-scrim:/g)).toHaveLength(1);
+    expect(appCSS).not.toContain('prefers-color-scheme');
+    expect(appCSS).toContain('color-scheme: dark');
   });
 
   it('tidak ada selector global section atau .table-wrap tanpa prefix halaman', () => {
