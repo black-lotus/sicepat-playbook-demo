@@ -20,7 +20,7 @@ paths:
     get:
       summary: Daftar KPI harian per kurir
       parameters:
-        - { name: start_date, in: query, required: true, schema: { type: string, format: date }, description: "Awal periode (UTC), maksimal 31 hari dari end_date" }
+        - { name: start_date, in: query, required: true, schema: { type: string, format: date }, description: "Awal periode (tanggal WIB), maksimal 31 hari dari end_date" }
         - { name: end_date, in: query, required: true, schema: { type: string, format: date } }
         - { name: branch_id, in: query, required: false, schema: { type: string } }
         - { name: page, in: query, required: false, schema: { type: integer, minimum: 1, default: 1 } }
@@ -48,6 +48,39 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
+  /api/v1/courier-performance:
+    get:
+      summary: Ranking performa kurir beserta tren harian
+      description: "Urutan: success_rate menurun, lalu courier_id menaik. rank adalah posisi global, stabil di semua halaman. Kurir tanpa event di periode tidak muncul."
+      parameters:
+        - { name: start_date, in: query, required: true, schema: { type: string, format: date }, description: "Awal periode (tanggal WIB, inklusif), maksimal 31 hari dari end_date" }
+        - { name: end_date, in: query, required: true, schema: { type: string, format: date }, description: "Akhir periode (tanggal WIB, inklusif)" }
+        - { name: branch_id, in: query, required: false, schema: { type: string }, description: "Kosong berarti semua cabang" }
+        - { name: page, in: query, required: false, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: page_size, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+      responses:
+        "200":
+          description: Satu halaman ranking performa kurir
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/CourierPerformance" }
+                  meta: { $ref: "#/components/schemas/PageMeta" }
+        "400":
+          description: Parameter atau filter tidak valid (invalid_query atau invalid_filter)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500":
+          description: Kesalahan server (internal_error)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
 components:
   schemas:
     CourierMetric:
@@ -64,6 +97,34 @@ components:
         on_time: { type: integer, example: 6 }
         success_rate: { type: number, description: "delivered / total_packages (0..1)", example: 0.8 }
         sla_rate: { type: number, description: "on_time / delivered (0..1)", example: 0.75 }
+    CourierPerformance:
+      type: object
+      required: [rank, courier_id, courier_name, branch_id, total_packages, delivered, failed, on_time, success_rate, sla_rate, success_rate_gap, daily]
+      properties:
+        rank: { type: integer, minimum: 1, description: "Posisi global (1 sampai meta.total), stabil di semua halaman. Urut success_rate menurun, lalu courier_id menaik.", example: 1 }
+        courier_id: { type: string, example: C001 }
+        courier_name: { type: string, example: Budi Santoso }
+        branch_id: { type: string, example: JKT01 }
+        total_packages: { type: integer, example: 40 }
+        delivered: { type: integer, example: 36 }
+        failed: { type: integer, example: 4 }
+        on_time: { type: integer, example: 33 }
+        success_rate: { type: number, description: "delivered / total_packages (0..1)", example: 0.9 }
+        sla_rate: { type: number, description: "on_time / delivered (0..1)", example: 0.9166666666666666 }
+        success_rate_gap: { type: number, description: "success_rate peringkat 1 dikurangi success_rate kurir ini (0 untuk peringkat 1). Dihitung backend karena peringkat 1 bisa ada di halaman lain.", example: 0 }
+        daily:
+          type: array
+          description: "Satu entri per tanggal WIB dari start_date sampai end_date, urut menaik. Hari tanpa event bernilai 0. Jumlah tiap field sama dengan totalnya."
+          items: { $ref: "#/components/schemas/DailyCount" }
+    DailyCount:
+      type: object
+      required: [date, total_packages, delivered, failed, on_time]
+      properties:
+        date: { type: string, format: date, description: "Tanggal WIB", example: "2026-11-01" }
+        total_packages: { type: integer, example: 6 }
+        delivered: { type: integer, example: 6 }
+        failed: { type: integer, example: 0 }
+        on_time: { type: integer, example: 5 }
     PageMeta:
       type: object
       required: [page, page_size, total]

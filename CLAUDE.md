@@ -125,7 +125,7 @@ Dependensi penting:
 - Field JSON memakai snake_case (`awb_number`, `success_rate`).
 - Response sukses berbentuk `{"data": ..., "meta": ...}`. `meta` berisi info pagination (`page`, `page_size`, `total`).
 - Response error berbentuk `{"error": {"code": "...", "message": "..."}}` dengan status HTTP yang sesuai (400, 404, 422, 500). Pesan error internal tidak dikirim ke client.
-- Filter periode memakai `start_date` dan `end_date` dengan format ISO 8601. Semua waktu disimpan dalam UTC; konversi zona waktu dilakukan di frontend.
+- Filter periode memakai `start_date` dan `end_date` dengan format ISO 8601. Semua waktu disimpan dalam UTC. Batas hari laporan dan batas SLA adalah aturan bisnis yang dihitung backend dalam WIB (UTC+7); `start_date` dan `end_date` adalah tanggal WIB.
 - Angka KPI dihitung di backend, karena frontend hanya memformat.
 - Perubahan kontrak API (endpoint, bentuk request atau response) harus disepakati dengan tim frontend dan didokumentasikan di spesifikasi OpenAPI (`backend/api/openapi.yaml`).
 
