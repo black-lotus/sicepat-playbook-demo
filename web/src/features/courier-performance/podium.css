@@ -15,8 +15,13 @@
 .podium-name { font-size: var(--text-base); font-weight: 700; overflow-wrap: anywhere; }
 .podium-figure { margin-top: var(--space-3); font-size: 2.25rem; font-weight: 800; line-height: 1.05; letter-spacing: -0.02em; }
 .podium-label, .podium-meta { font-size: var(--text-sm); color: var(--color-ink-muted); }
-.podium-card .daily-strip-md { margin-top: auto; gap: 5px; }
-.podium-card .daily-day { border-radius: 4px; }
+.podium-card .daily-chart { position: relative; z-index: 3; margin-top: auto; padding-top: var(--space-3); }
+
+/* Kartu bukan lagi tombol: nama kurir adalah tombolnya, dan ::after-nya meregang menutupi kartu (di bawah grafik) supaya seluruh kartu tetap bisa diklik. */
+.podium-card > .podium-select { position: relative; z-index: 2; padding: 0; border: 0; border-radius: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.podium-card > .podium-select::after { content: ''; position: absolute; inset: -100vmax; }
+.podium-card > .podium-select:focus-visible { outline: none; }
+.podium-card:has(> .podium-select:focus-visible) { outline: 2px solid var(--color-lane); outline-offset: 2px; }
 
 .podium-hero { min-height: 280px; padding: var(--space-5); color: #fff; border-color: rgb(255 255 255 / 0.2); background: radial-gradient(70% 80% at 100% 0%, rgb(255 255 255 / 0.24), transparent 62%), radial-gradient(60% 70% at 95% 100%, rgb(139 92 246 / 0.55), transparent 70%), var(--gradient-hero); box-shadow: 0 18px 44px rgb(74 60 220 / 0.4), inset 0 1px 0 rgb(255 255 255 / 0.24); }
 .podium-hero:hover { border-color: rgb(255 255 255 / 0.32); }
@@ -25,6 +30,8 @@
 .podium-hero::before { left: 28%; right: -28%; bottom: -62%; height: 100%; border-top: 2px solid rgb(255 255 255 / 0.42); background: radial-gradient(ellipse at 50% 0%, rgb(190 200 255 / 0.3), transparent 68%); transform: rotate(-9deg); }
 .podium-hero::after { left: 8%; right: -45%; bottom: -78%; height: 100%; border-top: 2px solid rgb(255 255 255 / 0.22); background: radial-gradient(ellipse at 50% 0%, rgb(120 140 255 / 0.32), transparent 68%); transform: rotate(-4deg); }
 .podium-hero > * { position: relative; z-index: 1; }
+.podium-hero > .podium-select { z-index: 2; }
+.podium-hero > .daily-chart { z-index: 3; }
 .podium-eyebrow { font-size: var(--text-sm); font-weight: 600; color: rgb(255 255 255 / 0.9); }
 .podium-hero .podium-who { margin-top: var(--space-3); }
 .podium-hero .podium-name { font-size: var(--text-lg); }
@@ -32,10 +39,8 @@
 .podium-hero .podium-label, .podium-hero .podium-meta { color: rgb(255 255 255 / 0.88); }
 .podium-chip { display: inline-flex; align-items: center; gap: var(--space-1); margin-top: var(--space-3); padding: 4px 10px; border-radius: var(--radius-pill); background: rgb(6 10 34 / 0.5); color: var(--color-positive); font-size: var(--text-sm); font-weight: 700; }
 .podium-hero .podium-meta { margin-bottom: var(--space-3); }
-.podium-hero .daily-strip-md { height: 56px; margin-top: auto; gap: 6px; }
-.podium-hero .daily-day { background: rgb(255 255 255 / 0.16); }
-.podium-hero .daily-on-time { background: #fff; }
-.podium-hero .daily-late { background: repeating-linear-gradient(135deg, #fff 0 2px, transparent 2px 4px); }
+.podium-hero .daily-chart { --daily-height: 104px; --daily-gap: 6px; --daily-track: rgb(255 255 255 / 0.14); --seg-on-time: #fff; --seg-late: #ffd37a; --seg-failed: rgb(255 255 255 / 0.78); }
+.podium-hero .daily-axis, .podium-hero .daily-legend { color: rgb(255 255 255 / 0.88); }
 
 .avatar { display: inline-grid; place-items: center; flex: none; border-radius: 50%; font-weight: 700; letter-spacing: 0.02em; color: #fff; background: linear-gradient(135deg, hsl(var(--hue) 62% 27%), hsl(calc(var(--hue) + 40) 62% 19%)); border: 1px solid rgb(255 255 255 / 0.18); }
 .avatar-sm { width: 32px; height: 32px; font-size: 0.6875rem; }

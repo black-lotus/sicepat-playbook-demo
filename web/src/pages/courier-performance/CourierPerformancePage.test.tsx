@@ -2,6 +2,7 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { delay, http, HttpResponse } from 'msw';
 
+import { nestedInteractive } from '../../test/a11y';
 import { courierPerformanceDTOs } from '../../test/fixtures';
 import { renderWithProviders } from '../../test/render';
 import { server } from '../../test/server';
@@ -111,7 +112,7 @@ describe('CourierPerformancePage', () => {
     expect(params?.get('page_size')).toBe('50');
   });
 
-  it('kartu podium punya nama aksesibel tanpa strip harian dan tanpa div di dalam tombol', async () => {
+  it('kartu podium punya tombol bernama kurir, grafik harian terpisah, dan tidak ada elemen interaktif bersarang', async () => {
     server.use(http.get(endpoint, () => HttpResponse.json({ data: courierPerformanceDTOs, meta })));
 
     renderPage();
@@ -120,10 +121,21 @@ describe('CourierPerformancePage', () => {
     const budiCard = within(podium).getByRole('button', { name: /Budi Santoso/ });
     expect(budiCard).toHaveAccessibleName(/Budi Santoso/);
     expect(budiCard).not.toHaveAccessibleName(/Tren harian/);
-    expect(budiCard.querySelector('div')).toBeNull();
-    for (const card of within(podium).getAllByRole('button')) {
-      expect(card.querySelector('div')).toBeNull();
-    }
+    expect(budiCard.querySelector('.daily-chart')).toBeNull();
+    expect(within(podium).getAllByRole('group', { name: /Tren harian/ })).toHaveLength(3);
+    expect(nestedInteractive(podium)).toEqual([]);
+  });
+
+  it('daftar hasil lengkap memakai grafik harian tersegmen tanpa elemen interaktif bersarang', async () => {
+    server.use(http.get(endpoint, () => HttpResponse.json({ data: courierPerformanceDTOs, meta })));
+
+    renderPage();
+
+    const table = await screen.findByRole('table', { name: 'Hasil lengkap' });
+    expect(within(table).getAllByRole('group', { name: /Tren harian/ })).toHaveLength(4);
+    expect(table.querySelector('.daily-axis')).toBeNull();
+    expect(table.querySelectorAll('[data-part="on-time"]').length).toBeGreaterThan(0);
+    expect(nestedInteractive(table)).toEqual([]);
   });
 
   it('pindah ke halaman 2 tanpa podium dengan rank global, lalu mengubah cabang kembali ke halaman 1', async () => {
@@ -296,8 +308,9 @@ describe('CourierPerformancePage', () => {
       expect(legend).toHaveTextContent('Target keberhasilan 90%');
       expect(legend).toHaveTextContent('Target tepat SLA 85%');
       const budi = rowOf('Budi Santoso');
-      expect(budi.querySelector('[data-target="success"]')).toHaveTextContent('Target keberhasilan 90%');
-      expect(budi.querySelector('[data-target="sla"]')).toHaveTextContent('Target tepat SLA 85%');
+      expect(budi.querySelectorAll('[data-target="success"]').length).toBeGreaterThan(0);
+      expect(budi.querySelectorAll('[data-target="sla"]').length).toBeGreaterThan(0);
+      expect(within(budi).getByRole('group', { name: /Target keberhasilan 90%\. Target tepat SLA 85%/ })).toBeInTheDocument();
       expect(within(budi).getByText('Di atas target')).toBeInTheDocument();
       expect(budi.querySelector('.status-badge svg[aria-hidden="true"]')).not.toBeNull();
       const dewi = rowOf('Dewi Lestari');

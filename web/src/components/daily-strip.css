@@ -1,0 +1,62 @@
+/* Grafik harian: batang bertumpuk. Segmen dibedakan warna DAN pola: penuh, garis miring, titik. */
+.daily-chart {
+  --seg-on-time: var(--color-lane);
+  --seg-late: var(--color-late);
+  --seg-failed: var(--color-failed);
+  --daily-track: rgb(255 255 255 / 0.06);
+  --daily-height: 72px;
+  --daily-gap: 4px;
+  display: grid;
+  gap: var(--space-1);
+  width: 100%;
+  min-width: 0;
+}
+.daily-chart-sm { --daily-height: 28px; --daily-gap: 2px; min-width: 96px; }
+.daily-chart-dense { --daily-gap: 1px; min-width: calc(var(--days) * 5px + (var(--days) - 1) * 1px); }
+.daily-chart-md { margin-top: var(--space-2); }
+
+.daily-strip, .daily-axis { display: grid; grid-template-columns: repeat(var(--days), minmax(0, 1fr)); gap: var(--daily-gap); }
+.daily-strip { height: var(--daily-height); align-items: stretch; }
+
+.daily-day { position: relative; display: flex; flex-direction: column; justify-content: flex-end; min-width: 0; height: 100%; background: var(--daily-track); border-radius: 3px 3px 0 0; cursor: default; }
+.daily-day:hover, .daily-day[data-active="true"] { background: rgb(255 255 255 / 0.14); }
+.daily-day:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 1px; }
+/* Hari tanpa paket: hanya garis dasar tipis. */
+.daily-day[data-empty="true"] { background: none; }
+.daily-day[data-empty="true"]::after { content: ''; display: block; height: 2px; background: var(--color-ink-muted); opacity: 0.6; border-radius: 1px; }
+
+.daily-stack { position: relative; display: flex; flex-direction: column-reverse; width: 100%; min-height: 3px; border-radius: 3px 3px 0 0; overflow: hidden; }
+.daily-part { display: block; width: 100%; min-height: 2px; }
+.daily-on-time { background: var(--seg-on-time); }
+.daily-late { background: repeating-linear-gradient(135deg, var(--seg-late) 0 2px, color-mix(in srgb, var(--seg-late) 28%, transparent) 2px 4px); }
+.daily-failed { background: radial-gradient(circle at 50% 50%, var(--seg-failed) 0.9px, transparent 1.3px) 0 0 / 4px 4px, color-mix(in srgb, var(--seg-failed) 14%, transparent); }
+
+/* Penanda target di dalam batang: garis penuh = keberhasilan, putus-putus = tepat SLA. */
+.daily-target { position: absolute; left: 0; right: 0; height: 0; border-top: 1.5px solid var(--color-ink); box-shadow: 0 1px 0 rgb(7 10 28 / 0.7), 0 -1px 0 rgb(7 10 28 / 0.7); pointer-events: none; }
+.daily-target[data-line="dashed"] { border-top-style: dashed; }
+
+.daily-axis { font-size: 0.6875rem; line-height: 1; color: var(--color-ink-muted); }
+.daily-axis > span { min-width: 0; text-align: center; white-space: nowrap; overflow: visible; }
+
+.daily-legend { display: flex; flex-wrap: wrap; gap: 2px var(--space-3); font-size: 0.6875rem; color: var(--color-ink-muted); }
+.daily-legend > span { display: inline-flex; align-items: center; gap: 5px; }
+.daily-swatch { display: inline-block; flex: none; width: 10px; height: 10px; border-radius: 2px; }
+.daily-key { display: inline-block; flex: none; width: 14px; border-top: 1.5px solid currentColor; }
+.daily-key[data-line="dashed"] { border-top-style: dashed; }
+
+/* Tooltip: fixed di body, diposisikan skrip; pointer-events none supaya tidak menutup batang di bawahnya. */
+.daily-tooltip { position: fixed; left: 0; top: 0; z-index: 1000; visibility: hidden; min-width: 168px; max-width: calc(100vw - 16px); padding: var(--space-2) var(--space-3); color: var(--color-ink); background: var(--color-surface-solid); border: 1px solid rgb(255 255 255 / 0.16); border-radius: 12px; box-shadow: var(--shadow-pop); font-size: var(--text-xs); line-height: 1.4; pointer-events: none; --seg-on-time: var(--color-lane); --seg-late: var(--color-late); --seg-failed: var(--color-failed); }
+.daily-tooltip::after { content: ''; position: absolute; left: calc(var(--arrow-x, 50%) - 5px); width: 10px; height: 10px; background: inherit; border: inherit; border-width: 0 1px 1px 0; transform: rotate(45deg); }
+.daily-tooltip[data-side="top"]::after { bottom: -6px; }
+.daily-tooltip[data-side="bottom"]::after { top: -6px; border-width: 1px 0 0 1px; }
+.daily-tooltip-date { display: block; margin-bottom: var(--space-1); font-size: var(--text-sm); }
+.daily-tooltip-rows { display: grid; gap: 2px; margin: 0; }
+.daily-tooltip-rows > div { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
+.daily-tooltip-rows dt { display: inline-flex; align-items: center; gap: 6px; color: var(--color-ink-muted); }
+.daily-tooltip-rows dd { margin: 0; font-weight: 700; }
+.daily-tooltip-total { margin-top: 2px; padding-top: 4px; border-top: 1px solid var(--color-rule); }
+.daily-tooltip-targets { margin: var(--space-1) 0 0; color: var(--color-ink-muted); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .daily-day { transition: background 120ms ease-out; }
+}
