@@ -4,10 +4,12 @@ import { BranchSummaryPage } from '../pages/branch-summary/BranchSummaryPage';
 import { CourierPerformancePage } from '../pages/courier-performance/CourierPerformancePage';
 import { FailedDeliveryPage } from '../pages/failed-delivery/FailedDeliveryPage';
 import { Layout } from './Layout';
+import { RouteError } from './RouteError';
 
 export const routes: RouteObject[] = [
   {
     element: <Layout />,
+    errorElement: <RouteError />,
     children: [
       { index: true, element: <Navigate to="/courier-performance" replace /> },
       { path: 'courier-performance', element: <CourierPerformancePage /> },
