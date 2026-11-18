@@ -1,0 +1,83 @@
+openapi: 3.0.3
+info:
+  title: SiGesit Performance API
+  version: 1.0.0
+  description: API KPI performa SiGesit (kurir SiCepat) untuk dashboard monitoring.
+paths:
+  /healthz:
+    get:
+      summary: Cek status service
+      responses:
+        "200":
+          description: Service sehat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+  /api/v1/courier-metrics:
+    get:
+      summary: Daftar KPI harian per kurir
+      parameters:
+        - { name: start_date, in: query, required: true, schema: { type: string, format: date }, description: "Awal periode (UTC), maksimal 31 hari dari end_date" }
+        - { name: end_date, in: query, required: true, schema: { type: string, format: date } }
+        - { name: branch_id, in: query, required: false, schema: { type: string } }
+        - { name: page, in: query, required: false, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: page_size, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+      responses:
+        "200":
+          description: Satu halaman KPI kurir
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/CourierMetric" }
+                  meta: { $ref: "#/components/schemas/PageMeta" }
+        "400":
+          description: Parameter atau filter tidak valid
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500":
+          description: Kesalahan server
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+components:
+  schemas:
+    CourierMetric:
+      type: object
+      required: [courier_id, courier_name, branch_id, date, total_packages, delivered, failed, on_time, success_rate, sla_rate]
+      properties:
+        courier_id: { type: string, example: C001 }
+        courier_name: { type: string, example: Budi }
+        branch_id: { type: string, example: JKT01 }
+        date: { type: string, format: date, example: "2026-11-17" }
+        total_packages: { type: integer, example: 10 }
+        delivered: { type: integer, example: 8 }
+        failed: { type: integer, example: 2 }
+        on_time: { type: integer, example: 6 }
+        success_rate: { type: number, description: "delivered / total_packages (0..1)", example: 0.8 }
+        sla_rate: { type: number, description: "on_time / delivered (0..1)", example: 0.75 }
+    PageMeta:
+      type: object
+      required: [page, page_size, total]
+      properties:
+        page: { type: integer }
+        page_size: { type: integer }
+        total: { type: integer }
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { type: string, example: invalid_filter }
+            message: { type: string }

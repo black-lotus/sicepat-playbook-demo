@@ -1,0 +1,47 @@
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --text: #1f2328;
+  --muted: #5d6470;
+  --border: #d9dde3;
+  --accent: #c8102e;
+  --error: #b42318;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15171a;
+    --surface: #1e2125;
+    --text: #e6e8eb;
+    --muted: #9aa1ab;
+    --border: #33383e;
+    --accent: #ff5a6e;
+    --error: #ff8a80;
+  }
+}
+
+body { margin: 0; background: var(--bg); }
+.topbar { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; padding: 12px 16px; background: var(--surface); border-bottom: 1px solid var(--border); }
+.brand { font-weight: 600; color: var(--accent); }
+.topbar nav { display: flex; flex-wrap: wrap; gap: 12px; }
+.topbar a { color: var(--muted); text-decoration: none; }
+.topbar a.active { color: var(--text); font-weight: 600; }
+main { padding: 16px; max-width: 1200px; margin: 0 auto; }
+h1 { font-size: 1.4rem; }
+.filters { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-bottom: 16px; }
+.filters label, .date-range label { display: flex; flex-direction: column; gap: 4px; font-size: 0.85rem; color: var(--muted); }
+.date-range { display: flex; gap: 12px; border: 0; padding: 0; margin: 0; }
+input { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); }
+button { padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); cursor: pointer; }
+button:disabled { opacity: 0.5; cursor: default; }
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.data-table th, .data-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
+.data-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.pagination { display: flex; gap: 12px; align-items: center; justify-content: flex-end; margin-top: 12px; }
+.state { color: var(--muted); padding: 24px 0; }
+.state-error { color: var(--error); }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
